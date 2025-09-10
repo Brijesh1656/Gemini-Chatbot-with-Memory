@@ -6,7 +6,7 @@ import time
 
 # Load environment variables
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Initialize Gemini model
 model = genai.GenerativeModel("gemini-2.5-flash")
