@@ -123,29 +123,58 @@ if uploaded_pdf:
 def get_gemini_response(question, history, image=None, pdf_text=None):
     """Get response from Gemini with optional image and PDF context"""
     try:
-        # Build conversation context
+        # Build conversation context (limit to last 5 messages to keep it short)
         conversation = "\n".join(
-            [f"You: {msg['user']}\nBot: {msg['bot']}" for msg in history[-10:]]  # Limit to last 10 messages
+            [f"Human: {msg['user']}\nAssistant: {msg['bot']}" for msg in history[-5:]]
         )
         
+        # Create a concise system prompt
+        system_prompt = """You are a helpful assistant. Please provide clear, concise, and well-formatted responses. 
+Keep your answers focused and to the point. Use bullet points or short paragraphs when appropriate.
+Avoid overly long explanations unless specifically requested."""
+        
         # Build the full prompt
-        full_prompt = f"{conversation}\n"
+        if conversation:
+            full_prompt = f"{system_prompt}\n\nConversation history:\n{conversation}\n\n"
+        else:
+            full_prompt = f"{system_prompt}\n\n"
         
-        # Add PDF context if available
+        # Add PDF context if available (limit to 2000 chars)
         if pdf_text:
-            full_prompt += f"\n[PDF Content]: {pdf_text[:3000]}...\n"  # Limit PDF text to avoid token limits
+            limited_pdf = pdf_text[:2000] + "..." if len(pdf_text) > 2000 else pdf_text
+            full_prompt += f"Document content for reference:\n{limited_pdf}\n\n"
         
-        full_prompt += f"You: {question}\nBot:"
+        full_prompt += f"Human: {question}\nAssistant:"
+        
+        # Configure generation for better output
+        generation_config = {
+            'temperature': 0.7,
+            'max_output_tokens': 1000,  # Limit response length
+        }
         
         # Generate response based on whether we have an image
         if image:
-            # Use vision model for image analysis
-            response = vision_model.generate_content([full_prompt, image])
+            response = vision_model.generate_content(
+                [full_prompt, image],
+                generation_config=generation_config
+            )
         else:
-            # Use text model for text-only queries
-            response = text_model.generate_content(full_prompt)
+            response = text_model.generate_content(
+                full_prompt,
+                generation_config=generation_config
+            )
         
-        return response.text
+        # Clean up the response
+        if response.text:
+            # Remove excessive line breaks and clean up formatting
+            cleaned_response = response.text.strip()
+            # Limit response length if it's too long
+            if len(cleaned_response) > 2000:
+                cleaned_response = cleaned_response[:2000] + "\n\n*[Response truncated for readability]*"
+            return cleaned_response
+        else:
+            return "I couldn't generate a response. Please try rephrasing your question."
+            
     except Exception as e:
         return f"❌ Error: {str(e)}. Please try again."
 
@@ -200,17 +229,13 @@ if prompt := st.chat_input("Type your message... (Upload files in sidebar first)
             pdf_text=pdf_text
         )
         
-        # Display response with typing effect
-        full_response = ""
-        for word in response.split():
-            full_response += word + " "
-            message_placeholder.markdown(full_response)
-            time.sleep(0.03)
+        # Display response (without typing effect for better readability)
+        message_placeholder.markdown(response)
     
     # Save to chat history with file usage info
     message_data = {
         "user": prompt,
-        "bot": full_response.strip(),
+        "bot": response.strip(),
         "image_used": st.session_state["uploaded_image"] is not None,
         "pdf_used": st.session_state["uploaded_pdf"] is not None
     }
