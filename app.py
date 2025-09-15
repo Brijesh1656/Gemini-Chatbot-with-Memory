@@ -6,6 +6,8 @@ import time
 from PIL import Image
 import PyPDF2
 import io
+from docx import Document
+import pandas as pd
 
 # Load environment variables
 load_dotenv()
@@ -30,18 +32,45 @@ vision_model = genai.GenerativeModel("gemini-2.5-flash")
 st.set_page_config(page_title="Enhanced Gemini Chatbot", layout="wide")
 st.title("🤖 Enhanced Gemini Chatbot - Text, Images & PDFs")
 
-# Helper function to extract text from PDF
-def extract_pdf_text(pdf_file):
-    """Extract text from uploaded PDF file"""
+# Helper function to extract text from different document types
+def extract_document_text(file):
+    """Extract text from uploaded document (PDF, DOCX, TXT, CSV)"""
     try:
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
-        return text
+        file_extension = file.name.lower().split('.')[-1]
+        
+        if file_extension == 'pdf':
+            # PDF extraction
+            pdf_reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text, "PDF"
+            
+        elif file_extension == 'docx':
+            # Word document extraction
+            doc = Document(file)
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text, "Word Document"
+            
+        elif file_extension == 'txt':
+            # Plain text file
+            text = str(file.read(), "utf-8")
+            return text, "Text File"
+            
+        elif file_extension == 'csv':
+            # CSV file
+            df = pd.read_csv(file)
+            text = f"CSV Data Preview (first 10 rows):\n{df.head(10).to_string()}\n\nColumns: {', '.join(df.columns)}\nTotal rows: {len(df)}"
+            return text, "CSV File"
+            
+        else:
+            return f"Unsupported file format: {file_extension}", "Unknown"
+            
     except Exception as e:
-        st.error(f"Error reading PDF: {str(e)}")
-        return None
+        st.error(f"Error reading {file.name}: {str(e)}")
+        return None, "Error"
 
 # Helper function to process image
 def process_image(image_file):
@@ -67,11 +96,11 @@ with st.sidebar:
         help="Upload an image for analysis"
     )
     
-    # PDF upload
-    uploaded_pdf = st.file_uploader(
-        "Upload a PDF",
-        type=['pdf'],
-        help="Upload a PDF document for text extraction"
+    # Document upload (PDF, Word, TXT, CSV)
+    uploaded_document = st.file_uploader(
+        "Upload a document",
+        type=['pdf', 'docx', 'txt', 'csv'],
+        help="Upload PDF, Word document, text file, or CSV"
     )
     
     st.divider()
@@ -80,7 +109,7 @@ with st.sidebar:
     if st.button("🧹 Clear Chat"):
         st.session_state["messages"] = []
         st.session_state["uploaded_image"] = None
-        st.session_state["uploaded_pdf"] = None
+        st.session_state["uploaded_document"] = None
         st.rerun()
     
     st.download_button(
@@ -98,9 +127,15 @@ with st.sidebar:
         st.success("🖼️ Image uploaded!")
         st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
     
-    if uploaded_pdf:
-        st.success("📄 PDF uploaded!")
-        st.info(f"PDF: {uploaded_pdf.name}")
+    if uploaded_document:
+        doc_text, doc_type = extract_document_text(uploaded_document)
+        if doc_text:
+            st.success(f"📄 {doc_type} uploaded!")
+            st.info(f"File: {uploaded_document.name}")
+            # Show preview of document content
+            with st.expander("📖 Document Preview"):
+                preview_text = doc_text[:500] + "..." if len(doc_text) > 500 else doc_text
+                st.text(preview_text)
 
 # Initialize session state
 if "messages" not in st.session_state:
@@ -123,29 +158,58 @@ if uploaded_pdf:
 def get_gemini_response(question, history, image=None, pdf_text=None):
     """Get response from Gemini with optional image and PDF context"""
     try:
-        # Build conversation context
+        # Build conversation context (limit to last 5 messages to keep it short)
         conversation = "\n".join(
-            [f"You: {msg['user']}\nBot: {msg['bot']}" for msg in history[-10:]]  # Limit to last 10 messages
+            [f"Human: {msg['user']}\nAssistant: {msg['bot']}" for msg in history[-5:]]
         )
         
+        # Create a concise system prompt
+        system_prompt = """You are a helpful assistant. Please provide clear, concise, and well-formatted responses. 
+Keep your answers focused and to the point. Use bullet points or short paragraphs when appropriate.
+Avoid overly long explanations unless specifically requested."""
+        
         # Build the full prompt
-        full_prompt = f"{conversation}\n"
+        if conversation:
+            full_prompt = f"{system_prompt}\n\nConversation history:\n{conversation}\n\n"
+        else:
+            full_prompt = f"{system_prompt}\n\n"
         
-        # Add PDF context if available
+        # Add PDF context if available (limit to 2000 chars)
         if pdf_text:
-            full_prompt += f"\n[PDF Content]: {pdf_text[:3000]}...\n"  # Limit PDF text to avoid token limits
+            limited_pdf = pdf_text[:2000] + "..." if len(pdf_text) > 2000 else pdf_text
+            full_prompt += f"Document content for reference:\n{limited_pdf}\n\n"
         
-        full_prompt += f"You: {question}\nBot:"
+        full_prompt += f"Human: {question}\nAssistant:"
+        
+        # Configure generation for better output
+        generation_config = {
+            'temperature': 0.7,
+            'max_output_tokens': 1000,  # Limit response length
+        }
         
         # Generate response based on whether we have an image
         if image:
-            # Use vision model for image analysis
-            response = vision_model.generate_content([full_prompt, image])
+            response = vision_model.generate_content(
+                [full_prompt, image],
+                generation_config=generation_config
+            )
         else:
-            # Use text model for text-only queries
-            response = text_model.generate_content(full_prompt)
+            response = text_model.generate_content(
+                full_prompt,
+                generation_config=generation_config
+            )
         
-        return response.text
+        # Clean up the response
+        if response.text:
+            # Remove excessive line breaks and clean up formatting
+            cleaned_response = response.text.strip()
+            # Limit response length if it's too long
+            if len(cleaned_response) > 2000:
+                cleaned_response = cleaned_response[:2000] + "\n\n*[Response truncated for readability]*"
+            return cleaned_response
+        else:
+            return "I couldn't generate a response. Please try rephrasing your question."
+            
     except Exception as e:
         return f"❌ Error: {str(e)}. Please try again."
 
@@ -200,17 +264,13 @@ if prompt := st.chat_input("Type your message... (Upload files in sidebar first)
             pdf_text=pdf_text
         )
         
-        # Display response with typing effect
-        full_response = ""
-        for word in response.split():
-            full_response += word + " "
-            message_placeholder.markdown(full_response)
-            time.sleep(0.03)
+        # Display response (without typing effect for better readability)
+        message_placeholder.markdown(response)
     
     # Save to chat history with file usage info
     message_data = {
         "user": prompt,
-        "bot": full_response.strip(),
+        "bot": response.strip(),
         "image_used": st.session_state["uploaded_image"] is not None,
         "pdf_used": st.session_state["uploaded_pdf"] is not None
     }
