@@ -6,7 +6,18 @@ import time
 
 # Load environment variables
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# Get API key from Streamlit secrets or .env
+if hasattr(st, 'secrets') and 'GOOGLE_API_KEY' in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+else:
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+if not api_key:
+    st.error("⚠️ GOOGLE_API_KEY not found! Please add it to Streamlit secrets")
+    st.stop()
+
+genai.configure(api_key=api_key)
 
 # Initialize Gemini model
 model = genai.GenerativeModel("gemini-2.5-flash")
@@ -67,4 +78,3 @@ if prompt := st.chat_input("Type your message..."):
 
     # Save conversation
     st.session_state["messages"].append({"user": prompt, "bot": full_response.strip()})
- 
