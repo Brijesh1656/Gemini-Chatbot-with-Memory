@@ -1,585 +1,479 @@
+from dotenv import load_dotenv
 import streamlit as st
-import yfinance as yf
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from datetime import datetime, timedelta
-import numpy as np
+import os
+import google.generativeai as genai
 import time
+from PIL import Image
+import PyPDF2
+from datetime import datetime
+
+# Load environment variables
+load_dotenv()
+
+# Get API key
+if hasattr(st, 'secrets') and 'GOOGLE_API_KEY' in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+else:
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+if not api_key:
+    st.error("⚠️ GOOGLE_API_KEY not found! Add it to .env file or Streamlit secrets")
+    st.info("Get your key from: https://makersuite.google.com/app/apikey")
+    st.stop()
+
+genai.configure(api_key=api_key)
+
+# Initialize Gemini model
+model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 # Page config
 st.set_page_config(
-    page_title="Stock Analysis Pro",
-    page_icon="📈",
+    page_title="Gemini AI Assistant",
+    page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Improved CSS with better contrast and readability
+# Improved CSS with better readability
 st.markdown("""
 <style>
-    /* Main background and text */
+    /* Dark theme base */
     .main {
         background-color: #0e1117;
     }
     
-    /* Header styling */
-    .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    /* Chat messages */
+    .stChatMessage {
+        background-color: rgba(38, 39, 48, 0.8);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 8px 0;
+        border: 1px solid rgba(250, 250, 250, 0.1);
     }
     
-    .main-header h1 {
-        color: white;
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-    
-    /* Metric cards */
-    div[data-testid="stMetricValue"] {
-        font-size: 2rem;
-        font-weight: 700;
-    }
-    
-    /* Buttons */
-    .stButton>button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        width: 100%;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    }
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: rgba(99, 102, 241, 0.1);
-        border-radius: 8px;
-        padding: 12px 24px;
-        font-weight: 600;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    /* User message styling */
+    [data-testid="stChatMessageContent"] {
+        color: #fafafa;
+        font-size: 15px;
+        line-height: 1.6;
     }
     
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #1a1d29;
+        background-color: #1a1d24;
+        border-right: 1px solid rgba(250, 250, 250, 0.1);
     }
     
-    /* Info boxes */
-    .stAlert {
+    /* Headers */
+    h1 {
+        color: #8b5cf6;
+        text-align: center;
+        font-size: 2.5rem !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    h3 {
+        color: #a78bfa;
+        margin-top: 1.5rem;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Download button */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        background-color: rgba(139, 92, 246, 0.05);
+        border: 2px dashed rgba(139, 92, 246, 0.3);
         border-radius: 10px;
+        padding: 15px;
+    }
+    
+    /* Chat input */
+    .stChatInputContainer {
+        border-radius: 10px;
+        border: 2px solid rgba(139, 92, 246, 0.3);
+        background-color: rgba(38, 39, 48, 0.6);
+    }
+    
+    /* Success/Info boxes */
+    .stSuccess, .stInfo, .stWarning {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 22px;
+        font-weight: 700;
+        color: #8b5cf6;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: rgba(139, 92, 246, 0.1);
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    /* Caption text */
+    .caption {
+        color: rgba(250, 250, 250, 0.5);
+        font-size: 13px;
+    }
+    
+    /* Divider */
+    hr {
+        border: none;
+        height: 1px;
+        background: rgba(250, 250, 250, 0.1);
+        margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Cached data fetching
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_stock_data(ticker, start_date, end_date):
-    """Fetch stock data with error handling"""
+# Helper functions
+def extract_pdf_text(pdf_file):
+    """Extract text from PDF"""
     try:
-        df = yf.download(
-            ticker, 
-            start=start_date, 
-            end=end_date, 
-            progress=False,
-            auto_adjust=True
-        )
-        
-        if df.empty:
-            return None, "No data found for this ticker"
-        
-        return df, None
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+        return text, len(pdf_reader.pages)
     except Exception as e:
-        return None, f"Error: {str(e)}"
+        st.error(f"Error reading PDF: {str(e)}")
+        return None, 0
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_ticker_info(ticker):
-    """Fetch ticker info"""
+def process_image(image_file):
+    """Process uploaded image"""
     try:
-        stock = yf.Ticker(ticker)
-        return stock.info
-    except:
-        return {}
+        return Image.open(image_file)
+    except Exception as e:
+        st.error(f"Error processing image: {str(e)}")
+        return None
 
-def calculate_technical_indicators(df):
-    """Calculate technical indicators"""
-    df_copy = df.copy()
+def get_file_size(file):
+    """Get human-readable file size"""
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
     
-    # RSI
-    delta = df_copy['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss.replace(0, np.nan) 
-    df_copy['RSI'] = 100 - (100 / (1 + rs))
-    
-    # MACD
-    exp1 = df_copy['Close'].ewm(span=12, adjust=False).mean()
-    exp2 = df_copy['Close'].ewm(span=26, adjust=False).mean()
-    df_copy['MACD'] = exp1 - exp2
-    df_copy['MACD_Signal'] = df_copy['MACD'].ewm(span=9, adjust=False).mean()
-    df_copy['MACD_Hist'] = df_copy['MACD'] - df_copy['MACD_Signal']
-    
-    # Bollinger Bands
-    df_copy['BB_Middle'] = df_copy['Close'].rolling(window=20).mean()
-    std = df_copy['Close'].rolling(window=20).std()
-    df_copy['BB_Upper'] = df_copy['BB_Middle'] + (2 * std)
-    df_copy['BB_Lower'] = df_copy['BB_Middle'] - (2 * std)
-    
-    # Moving Averages
-    df_copy['SMA_20'] = df_copy['Close'].rolling(window=20).mean()
-    df_copy['SMA_50'] = df_copy['Close'].rolling(window=50).mean()
-    df_copy['SMA_200'] = df_copy['Close'].rolling(window=200).mean()
-    
-    return df_copy
-
-# Header
-st.markdown("""
-<div class="main-header">
-    <h1>📈 Stock Analysis Pro</h1>
-    <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-top: 0.5rem;">
-        Technical Analysis & Market Intelligence
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
 
 # Initialize session state
-if 'stock_data' not in st.session_state:
-    st.session_state['stock_data'] = None
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "uploaded_image" not in st.session_state:
+    st.session_state.uploaded_image = None
+if "uploaded_pdf" not in st.session_state:
+    st.session_state.uploaded_pdf = None
+if "pdf_text" not in st.session_state:
+    st.session_state.pdf_text = None
+if "session_start" not in st.session_state:
+    st.session_state.session_start = datetime.now()
+
+# Header
+st.title("✨ Gemini AI Assistant")
+st.markdown("<p style='text-align: center; color: rgba(250,250,250,0.6); font-size: 16px;'>Your intelligent companion for text, images, and documents</p>", unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
-    st.title("⚙️ Configuration")
+    st.markdown("### 🎛️ Control Center")
     
-    ticker = st.text_input(
-        "Stock Ticker",
-        value="AAPL",
-        placeholder="e.g., AAPL, MSFT, GOOGL"
-    ).upper()
+    # Session stats
+    with st.expander("📊 Session Stats", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Messages", len(st.session_state.messages))
+        with col2:
+            duration = datetime.now() - st.session_state.session_start
+            mins = duration.seconds // 60
+            st.metric("Duration", f"{mins}m")
     
     st.divider()
     
-    # Date range presets
-    date_preset = st.selectbox(
-        "📅 Quick Date Range",
-        ["1 Month", "3 Months", "6 Months", "1 Year", "2 Years", "5 Years", "Custom"]
+    # File uploads
+    st.markdown("### 📁 Upload Files")
+    
+    # Image upload
+    uploaded_image = st.file_uploader(
+        "🖼️ Upload Image",
+        type=['png', 'jpg', 'jpeg', 'webp'],
+        help="PNG, JPG, JPEG, WEBP supported"
     )
     
-    today = datetime.today().date()
+    if uploaded_image:
+        st.session_state.uploaded_image = uploaded_image
+        st.success(f"✅ {uploaded_image.name}")
+        st.caption(f"📦 {get_file_size(uploaded_image)}")
+        
+        img = Image.open(uploaded_image)
+        st.image(img, use_container_width=True)
+        
+        if st.button("🗑️ Remove Image"):
+            st.session_state.uploaded_image = None
+            st.rerun()
     
-    if date_preset == "Custom":
-        col1, col2 = st.columns(2)
-        with col1:
-            start_date = st.date_input(
-                "Start",
-                value=today - timedelta(days=365),
-                max_value=today
-            )
-        with col2:
-            end_date = st.date_input(
-                "End",
-                value=today,
-                max_value=today
-            )
-    else:
-        days_map = {
-            "1 Month": 30,
-            "3 Months": 90,
-            "6 Months": 180,
-            "1 Year": 365,
-            "2 Years": 730,
-            "5 Years": 1825
-        }
-        start_date = today - timedelta(days=days_map[date_preset])
-        end_date = today
-        st.info(f"📆 {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
+    # PDF upload
+    uploaded_pdf = st.file_uploader(
+        "📄 Upload PDF",
+        type=['pdf'],
+        help="Upload PDF for analysis"
+    )
+    
+    if uploaded_pdf:
+        st.session_state.uploaded_pdf = uploaded_pdf
+        st.success(f"✅ {uploaded_pdf.name}")
+        st.caption(f"📦 {get_file_size(uploaded_pdf)}")
+        
+        # Extract text
+        if st.session_state.pdf_text is None:
+            with st.spinner("Reading PDF..."):
+                text, pages = extract_pdf_text(uploaded_pdf)
+                if text:
+                    st.session_state.pdf_text = text
+                    st.info(f"📑 {pages} pages extracted")
+        
+        if st.button("🗑️ Remove PDF"):
+            st.session_state.uploaded_pdf = None
+            st.session_state.pdf_text = None
+            st.rerun()
     
     st.divider()
     
-    if st.button("🚀 Fetch Data", use_container_width=True):
-        with st.spinner(f"Fetching {ticker} data..."):
-            df, error = fetch_stock_data(ticker, start_date, end_date)
-            
-            if error:
-                st.error(error)
-            else:
-                ticker_info = fetch_ticker_info(ticker)
-                st.session_state['stock_data'] = df
-                st.session_state['ticker_info'] = ticker_info
-                st.success(f"✅ Loaded {len(df)} days!")
+    # Action buttons
+    st.markdown("### ⚡ Quick Actions")
     
-    # Data info
-    if st.session_state['stock_data'] is not None:
-        st.divider()
-        st.markdown("### 📊 Data Info")
-        data = st.session_state['stock_data']
-        st.metric("Total Days", len(data))
-        st.caption(f"From: {data.index[0].strftime('%Y-%m-%d')}")
-        st.caption(f"To: {data.index[-1].strftime('%Y-%m-%d')}")
-
-# Main content
-if st.session_state['stock_data'] is not None:
-    data = st.session_state['stock_data'].copy()
-    ticker_info = st.session_state.get('ticker_info', {})
-    
-    # Calculate indicators if enough data
-    if len(data) >= 50:
-        data = calculate_technical_indicators(data)
-    
-    # Key Metrics
-    st.markdown("### 📊 Key Metrics")
-    
-    current_price = data['Close'].iloc[-1]
-    prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
-    price_change = current_price - prev_price
-    price_change_pct = (price_change / prev_price) * 100 if prev_price != 0 else 0
-    
-    high_52w = data['High'].tail(252).max() if len(data) >= 252 else data['High'].max()
-    low_52w = data['Low'].tail(252).min() if len(data) >= 252 else data['Low'].min()
-    avg_volume = data['Volume'].tail(20).mean()
-    
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    with col1:
-        st.metric(
-            "Current Price",
-            f"${current_price:.2f}",
-            f"{price_change:+.2f} ({price_change_pct:+.2f}%)"
-        )
-    
-    with col2:
-        st.metric(
-            "52W High",
-            f"${high_52w:.2f}",
-            f"{((current_price / high_52w - 1) * 100):.1f}% from high"
-        )
-    
-    with col3:
-        st.metric(
-            "52W Low",
-            f"${low_52w:.2f}",
-            f"{((current_price / low_52w - 1) * 100):.1f}% from low"
-        )
-    
-    with col4:
-        st.metric(
-            "Avg Volume (20D)",
-            f"{avg_volume/1e6:.2f}M",
-            f"Last: {data['Volume'].iloc[-1]/1e6:.2f}M"
-        )
-    
-    with col5:
-        market_cap = ticker_info.get('marketCap', 0)
-        if market_cap > 0:
-            market_cap_str = f"${market_cap/1e9:.2f}B" if market_cap > 1e9 else f"${market_cap/1e6:.2f}M"
-        else:
-            market_cap_str = "N/A"
-        
-        pe_ratio = ticker_info.get('trailingPE', 'N/A')
-        pe_str = f"{pe_ratio:.2f}" if isinstance(pe_ratio, (int, float)) else "N/A"
-        
-        st.metric("Market Cap", market_cap_str, f"P/E: {pe_str}")
-    
-    st.divider()
-    
-    # Tabs
-    tab1, tab2, tab3 = st.tabs(["📈 Price Chart", "📊 Technical Indicators", "⚡ Backtest"])
-    
-    # TAB 1: Price Chart
-    with tab1:
-        chart_col1, chart_col2 = st.columns([3, 1])
-        
-        with chart_col1:
-            chart_type = st.radio(
-                "Chart Type",
-                ["Candlestick", "Line", "Area"],
-                horizontal=True
-            )
-        
-        with chart_col2:
-            show_volume = st.checkbox("Show Volume", value=True)
-        
-        # Indicators
-        indicators = st.multiselect(
-            "Overlay Indicators",
-            ["SMA (20)", "SMA (50)", "SMA (200)", "Bollinger Bands"],
-            default=["SMA (20)", "SMA (50)"]
-        )
-        
-        # Create figure
-        if show_volume:
-            fig = make_subplots(
-                rows=2, cols=1,
-                shared_xaxes=True,
-                vertical_spacing=0.05,
-                row_heights=[0.7, 0.3],
-                subplot_titles=(f'{ticker} Price', 'Volume')
-            )
-        else:
-            fig = go.Figure()
-        
-        # Add price chart
-        if chart_type == "Candlestick":
-            fig.add_trace(
-                go.Candlestick(
-                    x=data.index,
-                    open=data['Open'],
-                    high=data['High'],
-                    low=data['Low'],
-                    close=data['Close'],
-                    name="Price",
-                    increasing_line_color='#10b981',
-                    decreasing_line_color='#ef4444'
-                ),
-                row=1, col=1
-            )
-        elif chart_type == "Line":
-            fig.add_trace(
-                go.Scatter(
-                    x=data.index,
-                    y=data['Close'],
-                    mode='lines',
-                    name='Close',
-                    line=dict(color='#667eea', width=2)
-                ),
-                row=1, col=1
-            )
-        elif chart_type == "Area":
-            fig.add_trace(
-                go.Scatter(
-                    x=data.index,
-                    y=data['Close'],
-                    mode='lines',
-                    name='Close',
-                    fill='tozeroy',
-                    line=dict(color='#667eea', width=2),
-                    fillcolor='rgba(102, 126, 234, 0.3)'
-                ),
-                row=1, col=1
-            )
-        
-        # Add indicators
-        colors = ['#8b5cf6', '#ec4899', '#f59e0b']
-        color_idx = 0
-        
-        for indicator in indicators:
-            if "SMA" in indicator and indicator in ['SMA (20)', 'SMA (50)', 'SMA (200)']:
-                col_name = indicator.replace(' ', '_').replace('(', '').replace(')', '')
-                if col_name in data.columns:
-                    fig.add_trace(
-                        go.Scatter(
-                            x=data.index,
-                            y=data[col_name],
-                            mode='lines',
-                            name=indicator,
-                            line=dict(color=colors[color_idx % len(colors)], width=2)
-                        ),
-                        row=1, col=1
-                    )
-                    color_idx += 1
-            
-            elif indicator == "Bollinger Bands" and 'BB_Upper' in data.columns:
-                fig.add_trace(
-                    go.Scatter(
-                        x=data.index,
-                        y=data['BB_Upper'],
-                        mode='lines',
-                        name='BB Upper',
-                        line=dict(color='rgba(255, 255, 255, 0.3)', width=1, dash='dash'),
-                        showlegend=False
-                    ),
-                    row=1, col=1
-                )
-                fig.add_trace(
-                    go.Scatter(
-                        x=data.index,
-                        y=data['BB_Lower'],
-                        mode='lines',
-                        name='Bollinger Bands',
-                        line=dict(color='rgba(255, 255, 255, 0.3)', width=1, dash='dash'),
-                        fill='tonexty',
-                        fillcolor='rgba(255, 255, 255, 0.05)'
-                    ),
-                    row=1, col=1
-                )
-        
-        # Add volume
-        if show_volume:
-            colors_volume = ['#ef4444' if data['Close'].iloc[i] < data['Open'].iloc[i] else '#10b981' 
-                           for i in range(len(data))]
-            fig.add_trace(
-                go.Bar(
-                    x=data.index,
-                    y=data['Volume'],
-                    name='Volume',
-                    marker_color=colors_volume,
-                    opacity=0.5,
-                    showlegend=False
-                ),
-                row=2, col=1
-            )
-        
-        fig.update_layout(
-            height=700,
-            template='plotly_dark',
-            hovermode='x unified',
-            showlegend=True,
-            xaxis_rangeslider_visible=False,
-            margin=dict(l=50, r=50, t=50, b=50)
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # TAB 2: Technical Indicators
-    with tab2:
-        if 'RSI' in data.columns and 'MACD' in data.columns:
-            # Indicator metrics
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                current_rsi = data['RSI'].iloc[-1]
-                rsi_signal = "🟢 Oversold" if current_rsi < 30 else "🔴 Overbought" if current_rsi > 70 else "🟡 Neutral"
-                st.metric("RSI (14)", f"{current_rsi:.2f}", rsi_signal)
-            
-            with col2:
-                current_macd = data['MACD'].iloc[-1]
-                current_signal = data['MACD_Signal'].iloc[-1]
-                macd_trend = "🟢 Bullish" if current_macd > current_signal else "🔴 Bearish"
-                st.metric("MACD", f"{current_macd:.4f}", macd_trend)
-            
-            with col3:
-                if 'BB_Upper' in data.columns:
-                    bb_position = ((data['Close'].iloc[-1] - data['BB_Lower'].iloc[-1]) / 
-                                 (data['BB_Upper'].iloc[-1] - data['BB_Lower'].iloc[-1])) * 100
-                    bb_signal = "🔴 Near Upper" if bb_position > 80 else "🟢 Near Lower" if bb_position < 20 else "🟡 Mid Range"
-                    st.metric("BB Position", f"{bb_position:.1f}%", bb_signal)
-            
-            st.divider()
-            
-            # RSI Chart
-            st.markdown("#### RSI (Relative Strength Index)")
-            rsi_fig = go.Figure()
-            rsi_fig.add_trace(go.Scatter(
-                x=data.index,
-                y=data['RSI'],
-                mode='lines',
-                name='RSI',
-                line=dict(color='#667eea', width=2)
-            ))
-            rsi_fig.add_hline(y=70, line_dash="dash", line_color="#ef4444", annotation_text="Overbought")
-            rsi_fig.add_hline(y=30, line_dash="dash", line_color="#10b981", annotation_text="Oversold")
-            rsi_fig.update_layout(
-                height=300,
-                template='plotly_dark',
-                hovermode='x unified',
-                yaxis=dict(range=[0, 100])
-            )
-            st.plotly_chart(rsi_fig, use_container_width=True)
-            
-            # MACD Chart
-            st.markdown("#### MACD")
-            macd_fig = go.Figure()
-            macd_fig.add_trace(go.Scatter(
-                x=data.index,
-                y=data['MACD'],
-                mode='lines',
-                name='MACD',
-                line=dict(color='#667eea', width=2)
-            ))
-            macd_fig.add_trace(go.Scatter(
-                x=data.index,
-                y=data['MACD_Signal'],
-                mode='lines',
-                name='Signal',
-                line=dict(color='#f59e0b', width=2)
-            ))
-            colors_hist = ['#10b981' if val >= 0 else '#ef4444' for val in data['MACD_Hist']]
-            macd_fig.add_trace(go.Bar(
-                x=data.index,
-                y=data['MACD_Hist'],
-                name='Histogram',
-                marker_color=colors_hist,
-                opacity=0.5
-            ))
-            macd_fig.update_layout(
-                height=300,
-                template='plotly_dark',
-                hovermode='x unified'
-            )
-            st.plotly_chart(macd_fig, use_container_width=True)
-        else:
-            st.warning("⚠️ Not enough data to calculate indicators. Try a longer date range (at least 50 days).")
-    
-    # TAB 3: Backtest
-    with tab3:
-        st.info("🚀 **Coming Soon**: Strategy backtesting with SMA crossovers, RSI, and MACD strategies!")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.selectbox("Strategy", ["SMA Crossover (20/50)", "SMA Crossover (50/200)", "RSI Mean Reversion", "MACD"])
-        with col2:
-            st.number_input("Initial Capital ($)", value=10000, step=1000)
-        
-        st.button("🚀 Run Backtest", use_container_width=True, disabled=True)
-    
-    # Export section
-    st.divider()
     col1, col2 = st.columns(2)
     
     with col1:
-        csv = data.to_csv()
+        if st.button("🧹 Clear Chat"):
+            st.session_state.messages = []
+            st.rerun()
+    
+    with col2:
+        if st.button("🔄 Reset All"):
+            st.session_state.messages = []
+            st.session_state.uploaded_image = None
+            st.session_state.uploaded_pdf = None
+            st.session_state.pdf_text = None
+            st.session_state.session_start = datetime.now()
+            st.rerun()
+    
+    # Download chat
+    if st.session_state.messages:
+        chat_export = f"Gemini AI Chat\n{datetime.now().strftime('%Y-%m-%d %H:%M')}\n{'='*50}\n\n"
+        for i, msg in enumerate(st.session_state.messages, 1):
+            chat_export += f"[{i}] You: {msg['user']}\n"
+            chat_export += f"    AI: {msg['bot']}\n\n"
+        
         st.download_button(
-            "📥 Download Data (CSV)",
-            csv,
-            file_name=f"{ticker}_data_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
+            "📥 Download Chat",
+            data=chat_export,
+            file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain",
             use_container_width=True
         )
     
-    with col2:
-        st.info("💡 Export your analysis data for further processing")
+    st.divider()
+    
+    # Model info
+    with st.expander("🤖 About"):
+        st.markdown("""
+        **Model:** gemini-2.0-flash-exp
+        
+        **Features:**
+        - 💬 Chat & Q&A
+        - 🖼️ Image analysis
+        - 📄 PDF processing
+        - 🧠 Context memory
+        """)
 
-else:
-    # Welcome screen
-    st.markdown("""
-    <div style="text-align: center; padding: 4rem 2rem;">
-        <h2 style="color: #667eea;">👋 Welcome to Stock Analysis Pro</h2>
-        <p style="font-size: 1.2rem; opacity: 0.8; margin: 2rem 0;">
-            Enter a stock ticker in the sidebar and click "Fetch Data" to get started
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+# Get AI response
+def get_gemini_response(question, history, image=None, pdf_text=None):
+    """Generate response from Gemini"""
+    try:
+        # Build context
+        context = ""
+        
+        # Add recent history (last 5 messages)
+        if history:
+            context += "Previous conversation:\n"
+            for msg in history[-5:]:
+                context += f"User: {msg['user']}\nAI: {msg['bot']}\n\n"
+        
+        # Add PDF context
+        if pdf_text:
+            context += f"\n[Document content]\n{pdf_text[:3000]}...\n\n"
+        
+        # Build prompt
+        full_prompt = context + f"User: {question}\nAI:"
+        
+        # Generate
+        if image:
+            response = model.generate_content([full_prompt, image])
+        else:
+            response = model.generate_content(full_prompt)
+        
+        return response.text
     
-    col1, col2, col3 = st.columns(3)
+    except Exception as e:
+        error = str(e)
+        if "quota" in error.lower():
+            return "⚠️ API quota exceeded. Please check your quota or wait a few minutes."
+        elif "safety" in error.lower():
+            return "⚠️ Response blocked by safety filters. Try rephrasing your question."
+        else:
+            return f"❌ Error: {error}"
+
+# Main chat area
+chat_container = st.container()
+
+with chat_container:
+    # Welcome message
+    if not st.session_state.messages:
+        with st.chat_message("assistant", avatar="✨"):
+            st.markdown("""
+            👋 **Welcome!**
+            
+            I can help you with:
+            - 💬 Answering questions
+            - 🖼️ Analyzing images
+            - 📄 Reading PDFs
+            - 🔍 Finding information
+            
+            Upload files in the sidebar or start chatting!
+            """)
     
-    with col1:
-        st.info("📈 **Interactive Charts**\n\nCandlestick, line, and area charts with multiple technical indicators")
+    # Display chat history
+    for msg in st.session_state.messages:
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(msg["user"])
+            
+            # Show context used
+            tags = []
+            if msg.get("has_image"):
+                tags.append("🖼️")
+            if msg.get("has_pdf"):
+                tags.append("📄")
+            
+            if tags:
+                st.caption(" ".join(tags))
+        
+        with st.chat_message("assistant", avatar="✨"):
+            st.markdown(msg["bot"])
+
+# Chat input
+if prompt := st.chat_input("💭 Message Gemini...", key="chat_input"):
     
-    with col2:
-        st.info("📊 **Technical Analysis**\n\nRSI, MACD, Bollinger Bands, and moving averages")
+    # Display user message
+    with st.chat_message("user", avatar="👤"):
+        st.markdown(prompt)
+        
+        # Show what's being used
+        context_tags = []
+        if st.session_state.uploaded_image:
+            context_tags.append("🖼️ Image")
+        if st.session_state.uploaded_pdf:
+            context_tags.append("📄 PDF")
+        
+        if context_tags:
+            st.caption(" + ".join(context_tags))
     
-    with col3:
-        st.info("💾 **Export Data**\n\nDownload historical data in CSV format")
+    # Process image if uploaded
+    image_data = None
+    if st.session_state.uploaded_image:
+        image_data = process_image(st.session_state.uploaded_image)
+    
+    # Generate response
+    with st.chat_message("assistant", avatar="✨"):
+        with st.spinner("Thinking..."):
+            response = get_gemini_response(
+                prompt,
+                st.session_state.messages,
+                image=image_data,
+                pdf_text=st.session_state.pdf_text
+            )
+        
+        # Simulate typing effect
+        placeholder = st.empty()
+        full_text = ""
+        
+        for chunk in response.split():
+            full_text += chunk + " "
+            placeholder.markdown(full_text + "▌")
+            time.sleep(0.02)
+        
+        placeholder.markdown(response)
+    
+    # Save to history
+    st.session_state.messages.append({
+        "user": prompt,
+        "bot": response,
+        "has_image": st.session_state.uploaded_image is not None,
+        "has_pdf": st.session_state.uploaded_pdf is not None,
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    st.rerun()
+
+# Footer with tips
+st.divider()
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    with st.expander("💡 Tips"):
+        st.markdown("""
+        - Be specific with questions
+        - Upload files before asking
+        - Use context from PDFs
+        - Clear chat for new topics
+        """)
+
+with col2:
+    with st.expander("🖼️ Image Tips"):
+        st.markdown("""
+        - "Describe this image"
+        - "What text is in this?"
+        - "Analyze this chart"
+        - "What objects do you see?"
+        """)
+
+with col3:
+    with st.expander("📄 PDF Tips"):
+        st.markdown("""
+        - "Summarize this"
+        - "What are key points?"
+        - "Find info about X"
+        - "Explain section Y"
+        """)
 
 # Footer
-st.divider()
-st.caption("⚠️ For educational purposes only. Not financial advice. Data provided by Yahoo Finance.")
+st.markdown("""
+<div style='text-align: center; padding: 20px; opacity: 0.6;'>
+    <p>Powered by Google Gemini 2.0 Flash • Built with Streamlit</p>
+</div>
+""", unsafe_allow_html=True)
