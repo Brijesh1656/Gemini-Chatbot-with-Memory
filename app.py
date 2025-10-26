@@ -682,18 +682,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Stats Grid
-duration = datetime.now() - st.session_state.session_start
-total_seconds = duration.total_seconds()
-hours = int(total_seconds // 3600)
-mins = int((total_seconds % 3600) // 60)
-
-if hours > 0:
-    time_display = f"{hours}h {mins}m"
-elif mins > 0:
-    time_display = f"{mins}m"
-else:
-    time_display = "<1m"
-
 st.markdown(f"""
 <div class="stat-grid">
     <div class="stat-card">
@@ -701,12 +689,6 @@ st.markdown(f"""
         <div class="stat-label">Messages</div>
         <div class="stat-value">{len(st.session_state.messages)}</div>
         <div class="stat-delta">this session</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon">⏱️</div>
-        <div class="stat-label">Duration</div>
-        <div class="stat-value">{time_display}</div>
-        <div class="stat-delta">active time</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon">🖼️</div>
