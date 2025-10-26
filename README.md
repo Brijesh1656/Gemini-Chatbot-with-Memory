@@ -1,270 +1,306 @@
-# ✨ Gemini AI Assistant
+# GeminiFlow
 
-A powerful, modern Streamlit application that brings Google's Gemini 2.0 Flash to life with support for text conversations, image analysis, and PDF document processing.
+# ✨ GeminiFlow
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+> Multi-Modal AI Chat Platform with Excel Export & Document Processing
 
-## 🌟 Features
+A powerful AI assistant powered by Google's Gemini 2.0 Flash that combines conversational AI with advanced document processing, image analysis, and automatic Excel export capabilities for data-driven workflows.
 
-### 💬 Intelligent Chat
-- Context-aware conversations with memory
-- Natural language processing
-- Typing animation effects
-- Chat history export
+---
+
+## ✨ Features
+
+### 💬 Advanced Chat Interface
+- **Multi-Turn Conversations**: Context-aware responses with conversation history
+- **Streaming Responses**: Real-time text generation with typing animation
+- **Quick Prompts**: Pre-configured prompts for common tasks
+- **Session Management**: Track conversation duration and message count
+- **Smart Context Handling**: Maintains up to 5 previous messages for context
+
+### 📊 Excel Auto-Export
+- **Automatic Table Detection**: Identifies markdown tables in responses
+- **One-Click Excel Download**: Instant conversion to formatted .xlsx files
+- **Smart Formatting**: Auto-adjusts column widths based on content
+- **Professional Styling**: Clean, organized spreadsheets ready for business use
+- **Raw Data Access**: Copy markdown tables directly
 
 ### 🖼️ Image Analysis
-- Upload and analyze images (PNG, JPG, JPEG, WEBP)
-- Visual question answering
-- Object detection and description
-- Text extraction from images
+- **Multi-Format Support**: PNG, JPG, JPEG, WebP, GIF
+- **Smart Resizing**: Automatic compression for large images (max 4096px)
+- **Visual Preview**: In-sidebar image display with dimensions
+- **Data Extraction**: Extract text, numbers, and patterns from images
+- **Chart Analysis**: Understand graphs, diagrams, and visual data
 
 ### 📄 PDF Processing
-- Multi-page PDF support
-- Automatic text extraction
-- Document summarization
-- Contextual Q&A about uploaded documents
+- **Multi-Page Support**: Handle documents of any length
+- **Progress Tracking**: Real-time extraction progress for large files
+- **Smart Truncation**: Optimizes long documents for AI processing (8000 chars)
+- **Word Count Stats**: See pages and word count instantly
+- **Text Extraction**: Pull content from complex PDFs
 
-### 🎨 Modern UI
-- Beautiful dark theme interface
-- Responsive design
-- Real-time session statistics
-- File size and page count indicators
-- Smooth animations and transitions
+### ⚙️ Customization Options
+- **Temperature Control**: Adjust creativity (0.0-1.0)
+- **Token Limits**: Control response length (256-8192 tokens)
+- **Model Settings**: Fine-tune AI behavior
+- **Export Options**: JSON, Markdown, Excel formats
 
-## 🚀 Quick Start
+### 📥 Export & Sharing
+- **Chat History (Markdown)**: Complete conversation in .md format
+- **JSON Export**: Structured data with timestamps
+- **Excel Tables**: Individual table downloads
+- **Professional Formatting**: Ready-to-share reports
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+- Google API Key (Gemini 2.0)
+- pip package manager
 
 ### Installation
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/gemini-ai-assistant.git
-cd gemini-ai-assistant
+git clone https://github.com/Brijesh1656/GeminiFlow.git
+cd GeminiFlow
 ```
 
-2. **Install dependencies**
+2. **Install required packages**
 ```bash
-pip install -r requirements.txt
+pip install streamlit google-generativeai python-dotenv Pillow PyPDF2 pandas openpyxl
 ```
 
 3. **Set up your API key**
 
 Create a `.env` file in the project root:
 ```env
-GOOGLE_API_KEY=your_api_key_here
+GOOGLE_API_KEY=your_google_gemini_api_key_here
 ```
 
 Or use Streamlit secrets (`.streamlit/secrets.toml`):
 ```toml
-GOOGLE_API_KEY = "your_api_key_here"
+GOOGLE_API_KEY = "your_google_gemini_api_key_here"
 ```
 
-4. **Run the application**
+Get your API key: [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+### Running the Application
+
 ```bash
 streamlit run app.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+The application will open in your default browser at `http://localhost:8501`
 
-## 📦 Dependencies
+---
 
-```txt
-streamlit>=1.28.0
-google-generativeai>=0.3.0
-python-dotenv>=1.0.0
-Pillow>=10.0.0
-PyPDF2>=3.0.0
-```
+## 📖 Usage Guide
 
-Create a `requirements.txt` file with the above content.
+### 1. Start Chatting
+- Type your message in the chat input at the bottom
+- Press Enter or click Send
+- Watch AI respond in real-time with streaming text
 
-## 🎯 Usage
+### 2. Upload Files (Optional)
+- **Images**: Use sidebar to upload PNG, JPG, GIF, WebP
+- **PDFs**: Upload documents for summarization or analysis
+- Files attach automatically to your next message
 
-### Basic Chat
-1. Simply type your message in the chat input
-2. Press Enter to send
-3. View AI responses in real-time
+### 3. Use Quick Prompts
+- Click Quick Prompts in sidebar for templates
+- Customize the prompt with your specific data
+- Great for Excel tables, math problems, analysis
 
-### Image Analysis
-1. Click **"Upload Image"** in the sidebar
-2. Select an image file
-3. Ask questions about the image:
-   - "Describe this image"
-   - "What objects do you see?"
-   - "Extract text from this image"
+### 4. Get Excel Tables
+- Ask for data in "markdown table format"
+- AI generates formatted tables automatically
+- Click "📥 Excel" button below response
+- Download instantly as .xlsx file
 
-### PDF Processing
-1. Click **"Upload PDF"** in the sidebar
-2. Wait for automatic text extraction
-3. Ask questions about the document:
-   - "Summarize this document"
-   - "What are the key points?"
-   - "Find information about [topic]"
+### 5. Adjust Settings
+- **Temperature**: Higher = more creative, Lower = more focused
+- **Max Tokens**: Control response length
+- Experiment to find your perfect settings
 
-### Session Management
-- **Clear Chat**: Remove conversation history
-- **Reset All**: Clear everything including uploaded files
-- **Download Chat**: Export conversation as text file
+### 6. Export Your Work
+- **Chat History**: Download full conversation (Markdown/JSON)
+- **Individual Tables**: Excel files for each data table
+- **Raw Data**: Copy markdown for other tools
 
-## 🔧 Configuration
+---
 
-### API Configuration
-The app automatically looks for your API key in:
-1. Streamlit secrets (production)
-2. `.env` file (development)
+## 🛠️ Tech Stack
 
-### Model Settings
-Currently using `gemini-2.0-flash-exp`. To change:
-```python
-model = genai.GenerativeModel("your-model-name")
-```
+| Technology | Purpose |
+|------------|---------|
+| **Streamlit** | Web application framework and UI |
+| **Google Gemini 2.0** | Advanced multi-modal AI model |
+| **PyPDF2** | PDF text extraction and processing |
+| **Pillow (PIL)** | Image processing and optimization |
+| **Pandas** | Data manipulation and DataFrame creation |
+| **OpenPyXL** | Excel file generation and formatting |
+| **Python-dotenv** | Environment variable management |
 
-### Context Window
-By default, the app keeps the last 5 messages in context. Adjust in the code:
-```python
-for msg in history[-5:]:  # Change 5 to your preferred number
-```
+---
 
-## 📊 Features in Detail
+## 🎯 Use Cases
 
-### Session Statistics
-- Real-time message count
-- Session duration tracking
-- File upload indicators
+### 📊 Data Analysis
+- Convert text data to Excel-ready tables
+- Extract numerical data from images/PDFs
+- Generate formatted financial reports
 
-### Error Handling
-- API quota exceeded warnings
-- Safety filter notifications
-- File processing error messages
-- Graceful degradation
+### 🔢 Problem Solving
+- Step-by-step math solutions with tables
+- Physics/chemistry calculations
+- Engineering computations with formulas
 
-### File Support
-- **Images**: PNG, JPG, JPEG, WEBP
-- **Documents**: PDF with multi-page support
-- **Size Display**: Human-readable file sizes
-- **Preview**: Image thumbnails in sidebar
+### 📄 Document Processing
+- Summarize long PDFs quickly
+- Extract key points from reports
+- Analyze contracts and legal documents
 
-## 🎨 Customization
+### 🖼️ Visual Analysis
+- Extract data from charts and graphs
+- Analyze infographics and diagrams
+- OCR-like text extraction from images
 
-### Theme Colors
-Edit the CSS in the `st.markdown()` section:
-```python
-# Main accent color (purple)
-color: #8b5cf6;  # Change to your preferred color
+### 💼 Business Applications
+- Generate professional data tables
+- Create formatted Excel reports
+- Analyze financial statements
+- Process invoices and receipts
 
-# Gradient backgrounds
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-```
+---
 
-### Layout
-Modify the `st.set_page_config()` settings:
-```python
-st.set_page_config(
-    page_title="Your Title",
-    page_icon="🎯",
-    layout="wide",  # or "centered"
-    initial_sidebar_state="expanded"  # or "collapsed"
-)
-```
+## ⚠️ Disclaimer
 
-## 🐛 Troubleshooting
+**This application is for educational and productivity purposes.**
 
-### API Key Issues
-```
-⚠️ GOOGLE_API_KEY not found!
-```
-**Solution**: Ensure your `.env` file exists and contains the correct API key.
+- Requires valid Google Gemini API key
+- Subject to Google's API usage policies and quotas
+- AI responses should be verified for critical applications
+- Not a substitute for professional advice in specialized fields
 
-### Quota Exceeded
-```
-⚠️ API quota exceeded
-```
-**Solution**: Wait a few minutes or upgrade your API plan.
+---
 
-### PDF Reading Errors
-```
-Error reading PDF: ...
-```
-**Solution**: Ensure the PDF is not corrupted or password-protected.
+## 🐛 Known Issues
 
-### Image Processing Errors
-**Solution**: Check that the image format is supported and not corrupted.
+- **Large PDFs**: Files over 100 pages may take time to process
+- **API Quotas**: Free tier has rate limits (handle gracefully)
+- **Complex Tables**: Some nested tables may need manual adjustment
+- **Image Quality**: Low-resolution images may reduce accuracy
 
-## 📝 Example Prompts
+---
 
-### General Chat
-- "Explain quantum computing in simple terms"
-- "Write a haiku about spring"
-- "What's the capital of France?"
+## 📈 Roadmap
 
-### Image Analysis
-- "What's in this image?"
-- "Describe the colors and composition"
-- "Read any text visible in this image"
+### Feature Ideas
+- [ ] Voice input/output support
+- [ ] Multi-language conversation support
+- [ ] Code execution environment
+- [ ] Advanced chart visualization
+- [ ] Collaborative chat sessions
+- [ ] Custom prompt templates library
+- [ ] Integration with Google Drive
+- [ ] Mobile-responsive design
+- [ ] Chat branching and versioning
+- [ ] API endpoint for external apps
 
-### PDF Questions
-- "Summarize the main points of this document"
-- "What does section 3 say about [topic]?"
-- "Create a bullet-point summary"
+---
+
+## 👨‍💻 Author
+
+**Brijesh Singh**
+
+- GitHub: [@Brijesh1656](https://github.com/Brijesh1656)
+- LinkedIn: [brijesh-singh-b84275307](https://linkedin.com/in/brijesh-singh-b84275307)
+- Email: brijesh7146@gmail.com
+- Location: Hyderabad, India
+
+### About Me
+BBA (Business Analytics) student passionate about leveraging AI and data science to solve real-world problems. Experienced in Python, machine learning, and building intelligent applications.
+
+---
+
+## 🎓 Related Projects
+
+Check out my other AI and data science projects:
+- **[FinVision](https://github.com/Brijesh1656/FinVision)** - AI-powered financial document analysis with risk detection
+- **[Stock Analysis Pro](https://github.com/Brijesh1656/Stock-Analysis-Pro)** - Technical analysis platform with AI insights and backtesting
+
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Here's how you can help:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Google Gemini API for the AI capabilities
-- Streamlit for the amazing web framework
-- The open-source community for the dependencies
-
-## 👨‍💻 Developer
-
-**Brijesh Singh**
-- 🎓 BBA (Business Analytics) Student at Roots Collegium, Osmania University
-- 📍 Hyderabad, India
-- 📧 brijesh7146@gmail.com
-- 💼 [LinkedIn](https://linkedin.com/in/brijesh-singh-b84275307)
-- 🐙 [GitHub](https://github.com/Brijesh1656)
-
-Passionate about leveraging data and machine learning to deliver business insights and drive decision-making. Experienced in Python, SQL, and data visualization.
-
-### Other Projects
-- **[Stock Analysis Pro](https://github.com/Brijesh1656)** - Full-stack stock analysis with AI-powered chart pattern recognition
-- More projects on my [GitHub profile](https://github.com/Brijesh1656)
-
-## 📧 Contact & Support
-
-For questions, feedback, or collaboration:
-- 📮 Email: brijesh7146@gmail.com
-- 💬 Open an issue on GitHub
-- 🔗 Connect on [LinkedIn](https://linkedin.com/in/brijesh-singh-b84275307)
-
-## 🔮 Future Enhancements
-
-- [ ] Multi-language support
-- [ ] Voice input/output
-- [ ] Custom system prompts
-- [ ] Conversation branches
-- [ ] Export to multiple formats
-- [ ] Video analysis support
-- [ ] Real-time collaboration
+### Development Guidelines
+- Follow PEP 8 style guide
+- Add comments for complex logic
+- Test with various file types
+- Update documentation for new features
 
 ---
 
-**Built with ❤️ using Streamlit and Google Gemini**
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Google for Gemini 2.0 Flash API
+- Streamlit community for excellent framework
+- Open-source contributors
+- All users providing feedback and suggestions
+
+---
+
+## 📞 Support
+
+For support, questions, or feedback:
+- **Email**: brijesh7146@gmail.com
+- **Issues**: Open an issue on GitHub
+- **LinkedIn**: Message me directly
+
+---
+
+## 💡 Tips & Tricks
+
+### Getting Better Results
+1. **Be Specific**: "Create a table with columns: Name, Age, Score" works better than "make a table"
+2. **Request Formats**: Explicitly ask for "Excel-ready format" or "markdown table"
+3. **Step-by-Step**: Add "show calculations step-by-step" for math problems
+4. **Context Matters**: Upload PDFs/images before asking questions about them
+
+### Excel Export
+- Tables must use markdown format with `|` separators
+- Include a header row with `|---|---|` separator
+- AI automatically formats for Excel compatibility
+- Download appears immediately below table responses
+
+### File Handling
+- **Images**: Under 10MB work best
+- **PDFs**: First 8000 characters used (usually 10-15 pages)
+- **Multiple Files**: Upload one of each type (1 image + 1 PDF)
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if you find it helpful!**
+
+Made with ❤️ and ☕ by Brijesh Singh
+
+</div>
