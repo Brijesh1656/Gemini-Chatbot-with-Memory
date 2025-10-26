@@ -683,7 +683,27 @@ st.markdown("""
 
 # Stats Grid
 duration = datetime.now() - st.session_state.session_start
-mins = duration.seconds // 60
+total_seconds = duration.total_seconds()  # Gets ALL seconds
+hours = int(total_seconds // 3600)        # Divide by 3600 for hours
+mins = int((total_seconds % 3600) // 60)  # Remaining seconds ÷ 60 for minutes
+```
+
+Now it works properly:
+- `total_seconds()` = 30,000 seconds (8h 20m = 8×3600 + 20×60)
+- `hours` = 30,000 ÷ 3600 = **8 hours** ✅
+- `mins` = (30,000 % 3600) ÷ 60 = 1200 ÷ 60 = **20 minutes** ✅
+
+## 📊 **Visual Breakdown:**
+```
+8 hours 20 minutes = 30,000 seconds total
+
+OLD METHOD:
+duration.seconds → Only looks at 1200 (the 20 min part)
+Result: "20m" ❌ (missing 8 hours!)
+
+NEW METHOD:
+total_seconds() → Gets all 30,000 seconds
+Result: "8h 20m" ✅ (correct!)
 
 st.markdown(f"""
 <div class="stat-grid">
