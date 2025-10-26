@@ -32,7 +32,7 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 # Page config
 st.set_page_config(
-    page_title="Gemini AI Assistant",
+    page_title="GeminiFlow - AI Assistant",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -184,7 +184,7 @@ def export_chat_json():
 
 def export_chat_markdown():
     """Export chat as markdown"""
-    markdown = f"# Gemini AI Chat Session\n\n"
+    markdown = f"# GeminiFlow Chat Session\n\n"
     markdown += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
     markdown += f"**Messages:** {len(st.session_state.messages)}\n\n---\n\n"
     for i, msg in enumerate(st.session_state.messages, 1):
@@ -331,8 +331,8 @@ if "max_tokens" not in st.session_state:
     st.session_state.max_tokens = 2048
 
 # Header
-st.title("✨ Gemini AI Assistant")
-st.markdown("<p style='text-align: center; color: rgba(250,250,250,0.6); font-size: 16px;'>Excel Export • Image Analysis • PDF Processing</p>", unsafe_allow_html=True)
+st.title("✨ GeminiFlow")
+st.markdown("<p style='text-align: center; color: rgba(250,250,250,0.6); font-size: 16px;'>Excel Export • Image Analysis • PDF Processing • Powered by Gemini 2.0</p>", unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
@@ -431,25 +431,27 @@ with st.sidebar:
         col1, col2 = st.columns(2)
         with col1:
             st.download_button("💬 Chat (TXT)", data=export_chat_markdown(),
-                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                             file_name=f"geminiflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
                              mime="text/markdown", use_container_width=True)
         with col2:
             st.download_button("📊 Chat (JSON)", data=export_chat_json(),
-                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                             file_name=f"geminiflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                              mime="application/json", use_container_width=True)
     
     st.divider()
     
-    with st.expander("🤖 About"):
+    with st.expander("🤖 About GeminiFlow"):
         st.markdown("""
-        **Model:** gemini-2.0-flash-exp
+        **Model:** Gemini 2.0 Flash
         
         **Features:**
-        - 💬 Chat & Q&A
-        - 📊 Excel Export (auto)
-        - 🔢 Math Solutions
-        - 🖼️ Image Analysis
-        - 📄 PDF Processing
+        - 💬 Multi-turn conversations
+        - 📊 Auto Excel export
+        - 🔢 Math & calculations
+        - 🖼️ Image analysis
+        - 📄 PDF processing
+        
+        **Created by:** Brijesh Singh
         """)
 
 # Main chat
@@ -459,20 +461,20 @@ with chat_container:
     if not st.session_state.messages:
         with st.chat_message("assistant", avatar="✨"):
             st.markdown("""
-            👋 **Welcome! I'm your Gemini AI Assistant**
+            👋 **Welcome to GeminiFlow!**
             
-            I can help you with:
-            - 📊 **Excel & Data** - Tables auto-export to Excel
-            - 🔢 **Math Problems** - Step-by-step solutions
-            - 🖼️ **Image Analysis** - Extract data, analyze charts
-            - 📄 **PDFs** - Summarize and extract info
+            Your AI-powered productivity assistant with:
+            - 📊 **Excel Auto-Export** - Tables convert instantly
+            - 🔢 **Math Solutions** - Step-by-step calculations
+            - 🖼️ **Image Analysis** - Extract data from visuals
+            - 📄 **PDF Processing** - Summarize & analyze documents
             
-            **💡 Pro Tips:**
+            **💡 Quick Tips:**
             - Ask for "markdown table format" for Excel
-            - Use Quick Prompts in sidebar
-            - Excel download appears automatically for tables
+            - Use Quick Prompts in the sidebar
+            - Excel downloads appear automatically
             
-            Let's go! 🚀
+            Ready to flow? Let's begin! 🚀
             """)
     
     for i, msg in enumerate(st.session_state.messages):
@@ -495,7 +497,7 @@ with chat_container:
                     excel_data = create_excel_from_response(msg["bot"])
                     if excel_data:
                         st.download_button("📥 Excel", data=excel_data,
-                                         file_name=f"data_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                         file_name=f"geminiflow_data_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                          key=f"excel_{i}")
                 with col_b:
@@ -513,7 +515,7 @@ with chat_container:
                     pass
 
 # Chat input
-if prompt := st.chat_input("💭 Message Gemini..."):
+if prompt := st.chat_input("💭 Message GeminiFlow..."):
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
         context_tags = []
@@ -550,7 +552,7 @@ if prompt := st.chat_input("💭 Message Gemini..."):
                 excel_data = create_excel_from_response(response)
                 if excel_data:
                     st.download_button("📥 Excel", data=excel_data,
-                                     file_name=f"data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                     file_name=f"geminiflow_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                      mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                      key="excel_current")
             with col_b:
@@ -577,10 +579,10 @@ col1, col2, col3 = st.columns(3)
 with col1:
     with st.expander("💡 Tips"):
         st.markdown("""
-        - Be specific
-        - Upload files first
+        - Be specific and clear
+        - Upload files before asking
         - Use Quick Prompts
-        - Clear chat when switching topics
+        - Clear chat for new topics
         """)
 
 with col2:
@@ -589,8 +591,8 @@ with col2:
         **Auto Excel Download:**
         - Ask for "table format"
         - Click "📥 Excel" below response
-        - Downloads just the table
-        - No chat history included
+        - Downloads formatted table
+        - Ready for immediate use
         """)
 
 with col3:
@@ -604,6 +606,6 @@ with col3:
 
 st.markdown("""
 <div style='text-align: center; padding: 20px; opacity: 0.6;'>
-    <p>Powered by Google Gemini 2.0 • Excel Auto-Export</p>
+    <p>GeminiFlow • Powered by Google Gemini 2.0 • Created by Brijesh Singh</p>
 </div>
 """, unsafe_allow_html=True)
