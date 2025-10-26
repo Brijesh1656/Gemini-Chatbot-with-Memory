@@ -6,6 +6,9 @@
 
 A powerful AI assistant powered by Google's Gemini 2.0 Flash that combines conversational AI with advanced document processing, image analysis, and automatic Excel export capabilities for data-driven workflows.
 
+## 🚀 Live Demo
+Check out the live app here 👉 [GeminiFlow on Streamlit](https://geminiflow.streamlit.app/)
+
 ---
 
 ## ✨ Features
