@@ -683,27 +683,16 @@ st.markdown("""
 
 # Stats Grid
 duration = datetime.now() - st.session_state.session_start
-total_seconds = duration.total_seconds()  # Gets ALL seconds
-hours = int(total_seconds // 3600)        # Divide by 3600 for hours
-mins = int((total_seconds % 3600) // 60)  # Remaining seconds ÷ 60 for minutes
-```
+total_seconds = duration.total_seconds()
+hours = int(total_seconds // 3600)
+mins = int((total_seconds % 3600) // 60)
 
-Now it works properly:
-- `total_seconds()` = 30,000 seconds (8h 20m = 8×3600 + 20×60)
-- `hours` = 30,000 ÷ 3600 = **8 hours** ✅
-- `mins` = (30,000 % 3600) ÷ 60 = 1200 ÷ 60 = **20 minutes** ✅
-
-## 📊 **Visual Breakdown:**
-```
-8 hours 20 minutes = 30,000 seconds total
-
-OLD METHOD:
-duration.seconds → Only looks at 1200 (the 20 min part)
-Result: "20m" ❌ (missing 8 hours!)
-
-NEW METHOD:
-total_seconds() → Gets all 30,000 seconds
-Result: "8h 20m" ✅ (correct!)
+if hours > 0:
+    time_display = f"{hours}h {mins}m"
+elif mins > 0:
+    time_display = f"{mins}m"
+else:
+    time_display = "<1m"
 
 st.markdown(f"""
 <div class="stat-grid">
@@ -716,7 +705,7 @@ st.markdown(f"""
     <div class="stat-card">
         <div class="stat-icon">⏱️</div>
         <div class="stat-label">Duration</div>
-        <div class="stat-value">{mins}m</div>
+        <div class="stat-value">{time_display}</div>
         <div class="stat-delta">active time</div>
     </div>
     <div class="stat-card">
