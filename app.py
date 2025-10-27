@@ -28,8 +28,7 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 st.set_page_config(
     page_title="GeminiFlow",
     page_icon="✨",
-    layout="wide",
-    initial_sidebar_state="auto"
+    layout="wide"
 )
 
 st.markdown("""
@@ -101,19 +100,6 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* Sidebar Toggle Button - VISIBLE */
-    .sidebar-hint {
-        background: linear-gradient(135deg, #8b5cf6, #6366f1);
-        color: white;
-        padding: 1rem;
-        border-radius: 12px;
-        text-align: center;
-        margin-bottom: 1rem;
-        font-weight: 700;
-        cursor: pointer;
-        border: 2px solid rgba(139, 92, 246, 0.5);
-    }
-    
     /* Chat */
     .stChatMessage {
         background: rgba(255, 255, 255, 0.03) !important;
@@ -121,21 +107,6 @@ st.markdown("""
         padding: 0.75rem !important;
         margin: 0.5rem 0 !important;
         border: 1px solid rgba(139, 92, 246, 0.15) !important;
-    }
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: #0a0a0a !important;
-        border-right: 1px solid rgba(139, 92, 246, 0.2) !important;
-    }
-    
-    [data-testid="stSidebar"] h3 {
-        color: #fff !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        margin: 1rem 0 0.5rem 0 !important;
-        padding-bottom: 0.4rem !important;
-        border-bottom: 2px solid rgba(139, 92, 246, 0.3) !important;
     }
     
     /* File Upload */
@@ -197,6 +168,16 @@ st.markdown("""
         font-size: 0.85rem !important;
     }
     
+    /* Section Headers */
+    .section-header {
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 1rem 0 0.5rem 0;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+    }
+    
     #MainMenu, footer, header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
@@ -211,7 +192,7 @@ def extract_pdf_text(pdf_file):
             except:
                 pass
         return text.strip(), len(pdf_reader.pages)
-    except Exception as e:
+    except:
         return None, 0
 
 def process_image(image_file):
@@ -233,10 +214,7 @@ def get_file_size(file):
         size /= 1024.0
 
 def export_chat_json():
-    data = {
-        "session": st.session_state.session_start.isoformat(),
-        "messages": st.session_state.messages
-    }
+    data = {"session": st.session_state.session_start.isoformat(), "messages": st.session_state.messages}
     return json.dumps(data, indent=2)
 
 def export_chat_markdown():
@@ -247,14 +225,9 @@ def export_chat_markdown():
 
 def extract_table_from_text(text):
     lines = text.split('\n')
-    table_lines = []
-    for line in lines:
-        if '|' in line and not re.match(r'^\|[\s\-:]+\|', line.strip()):
-            table_lines.append(line.strip())
-    
+    table_lines = [line.strip() for line in lines if '|' in line and not re.match(r'^\|[\s\-:]+\|', line.strip())]
     if len(table_lines) < 2:
         return None
-    
     try:
         headers = [h.strip() for h in table_lines[0].split('|')[1:-1]]
         data = [[c.strip() for c in line.split('|')[1:-1]] for line in table_lines[1:]]
@@ -282,7 +255,6 @@ def get_gemini_response(question, history, image=None, pdf_text=None):
             context += f"\n\nDocument:\n{pdf_text[:6000]}"
         
         prompt = f"Use markdown tables. Show step-by-step.\n\n{context}\n\nUser: {question}\nAssistant:"
-        
         config = {"temperature": st.session_state.temperature, "max_output_tokens": st.session_state.max_tokens}
         
         if image:
@@ -319,13 +291,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# MOBILE: Sidebar hint with instructions
-st.markdown("""
-<div class="sidebar-hint">
-    👈 <strong>Tap the arrow (>) in top-left</strong> to upload files, adjust settings & export chat!
-</div>
-""", unsafe_allow_html=True)
-
 # Stats
 st.markdown(f"""
 <div class="stats">
@@ -347,21 +312,31 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# SIDEBAR - Where all controls live
-with st.sidebar:
-    st.markdown("### ⚙️ Settings")
-    
-    with st.expander("🎛️ Model Config", expanded=False):
-        st.session_state.temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, 
-                                                 help="Higher = more creative, Lower = more focused")
-        st.session_state.max_tokens = st.slider("Max Tokens", 256, 8192, 2048, 256,
-                                                help="Maximum response length")
-    
-    st.markdown("### 📤 Upload Files")
-    
-    # IMAGE
-    uploaded_image = st.file_uploader("📸 Upload Image", type=['png', 'jpg', 'jpeg', 'webp'], 
-                                     key="img", label_visibility="visible")
+# ===== CONTROLS IN MAIN AREA =====
+
+# Settings Expander
+with st.expander("⚙️ Settings & Model Configuration", expanded=False):
+    col1, col2 = st.columns(2)
+    with col1:
+        st.session_state.temperature = st.slider(
+            "🌡️ Temperature", 
+            0.0, 1.0, 0.7, 0.1,
+            help="Higher = creative, Lower = focused"
+        )
+    with col2:
+        st.session_state.max_tokens = st.slider(
+            "📏 Max Tokens", 
+            256, 8192, 2048, 256,
+            help="Maximum response length"
+        )
+
+# Upload Files Section
+st.markdown('<div class="section-header">📤 Upload Files</div>', unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    uploaded_image = st.file_uploader("📸 Upload Image", type=['png', 'jpg', 'jpeg', 'webp'], key="img")
     if uploaded_image:
         st.session_state.uploaded_image = uploaded_image
         st.success(f"✅ {uploaded_image.name}")
@@ -372,80 +347,75 @@ with st.sidebar:
         if st.button("🗑️ Remove Image", use_container_width=True, key="rm_img"):
             st.session_state.uploaded_image = None
             st.rerun()
-    
-    # PDF
-    uploaded_pdf = st.file_uploader("📄 Upload PDF", type=['pdf'], 
-                                   key="pdf", label_visibility="visible")
+
+with col2:
+    uploaded_pdf = st.file_uploader("📄 Upload PDF", type=['pdf'], key="pdf")
     if uploaded_pdf:
         st.session_state.uploaded_pdf = uploaded_pdf
         st.success(f"✅ {uploaded_pdf.name}")
         st.caption(f"Size: {get_file_size(uploaded_pdf)}")
         if st.session_state.pdf_text is None:
-            with st.spinner("📖 Reading PDF..."):
+            with st.spinner("📖 Reading..."):
                 text, pages = extract_pdf_text(uploaded_pdf)
                 if text:
                     st.session_state.pdf_text = text
-                    words = len(text.split())
-                    st.info(f"📑 {pages} pages • {words:,} words")
+                    st.info(f"📑 {pages} pages • {len(text.split())} words")
         else:
-            words = len(st.session_state.pdf_text.split())
-            st.info(f"📑 {words:,} words loaded")
+            st.info(f"📑 {len(st.session_state.pdf_text.split())} words")
         if st.button("🗑️ Remove PDF", use_container_width=True, key="rm_pdf"):
             st.session_state.uploaded_pdf = None
             st.session_state.pdf_text = None
             st.rerun()
-    
-    st.markdown("### ⚡ Actions")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🧹 Clear Chat", use_container_width=True, help="Clear all messages"):
-            st.session_state.messages = []
-            st.rerun()
-    with col2:
-        if st.button("🔄 Reset All", use_container_width=True, help="Reset everything"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.rerun()
-    
-    # EXPORT
+
+# Actions Section
+st.markdown('<div class="section-header">⚡ Actions</div>', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("🧹 Clear Chat", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
+
+with col2:
+    if st.button("🔄 Reset All", use_container_width=True):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+
+with col3:
     if st.session_state.messages:
-        st.markdown("### 📥 Export Chat")
-        
-        st.download_button(
-            "💬 Download Markdown (.md)",
-            data=export_chat_markdown(),
-            file_name=f"geminiflow_chat_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
-            mime="text/markdown",
-            use_container_width=True,
-            help="Download chat as Markdown file"
-        )
-        
-        st.download_button(
-            "📊 Download JSON",
-            data=export_chat_json(),
-            file_name=f"geminiflow_chat_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
-            mime="application/json",
-            use_container_width=True,
-            help="Download chat as JSON file"
-        )
+        with st.popover("📥 Export", use_container_width=True):
+            st.download_button(
+                "💬 Markdown (.md)",
+                export_chat_markdown(),
+                f"chat_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                "text/markdown",
+                use_container_width=True
+            )
+            st.download_button(
+                "📊 JSON",
+                export_chat_json(),
+                f"chat_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
+                "application/json",
+                use_container_width=True
+            )
+
+st.divider()
 
 # Chat Display
 if not st.session_state.messages:
     with st.chat_message("assistant", avatar="✨"):
         st.markdown("""
-        **👋 Welcome!**
+        **👋 Welcome to GeminiFlow!**
         
         I can help you with:
-        - 📊 Excel exports from tables
-        - 🖼️ Image analysis
-        - 📄 PDF processing
-        - 🔢 Math solutions
+        - 📊 **Excel exports** from tables
+        - 🖼️ **Image analysis**
+        - 📄 **PDF processing**
+        - 🔢 **Math solutions**
         
-        **Get Started:**
-        1. Tap **>** in top-left to open sidebar
-        2. Upload your files (image/PDF)
-        3. Ask me anything!
+        Upload files above and ask me anything!
         """)
 
 for i, msg in enumerate(st.session_state.messages):
@@ -460,9 +430,9 @@ for i, msg in enumerate(st.session_state.messages):
             if excel:
                 st.download_button(
                     "📥 Download Excel",
-                    data=excel,
-                    file_name=f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    excel,
+                    f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key=f"xl_{i}",
                     use_container_width=True
                 )
@@ -487,9 +457,9 @@ if prompt := st.chat_input("💭 Ask me anything..."):
             if excel:
                 st.download_button(
                     "📥 Download Excel",
-                    data=excel,
-                    file_name=f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    excel,
+                    f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="xl_new",
                     use_container_width=True
                 )
