@@ -36,343 +36,219 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Premium CSS
+# Streamlined CSS - Much cleaner
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap');
     
     * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     
     /* Dark Theme */
     .main, .stApp {
-        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%);
+        background: #0a0a0a;
         color: #ffffff;
     }
     
     .block-container {
-        padding: 2rem 1.5rem !important;
+        padding: 1.5rem 1rem !important;
         max-width: 1200px !important;
     }
     
-    @media (max-width: 768px) {
-        .block-container {
-            padding: 1rem !important;
-        }
-    }
-    
-    /* Hero Section */
-    .hero-section {
+    /* Hero - Simple & Clean */
+    .hero {
         text-align: center;
-        padding: 3rem 1.5rem;
-        margin-bottom: 2rem;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-        border-radius: 24px;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    @media (max-width: 768px) {
-        .hero-section {
-            padding: 2rem 1rem;
-            border-radius: 20px;
-        }
-    }
-    
-    .hero-section::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-        animation: rotate 20s linear infinite;
-    }
-    
-    @keyframes rotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .logo {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
-        position: relative;
-        z-index: 1;
-        animation: float 3s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    @media (max-width: 768px) {
-        .logo {
-            font-size: 2.5rem;
-        }
-    }
-    
-    .brand-name {
-        font-size: 3rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #ffffff 0%, #8b5cf6 50%, #3b82f6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -0.02em;
-        position: relative;
-        z-index: 1;
-    }
-    
-    @media (max-width: 768px) {
-        .brand-name {
-            font-size: 2rem;
-        }
-    }
-    
-    .tagline {
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.1rem;
-        margin-top: 1rem;
-        font-weight: 500;
-        position: relative;
-        z-index: 1;
-    }
-    
-    @media (max-width: 768px) {
-        .tagline {
-            font-size: 0.9rem;
-        }
-    }
-    
-    /* Stats Grid */
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    @media (max-width: 768px) {
-        .stat-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-    }
-    
-    .stat-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px);
-        padding: 1.5rem;
+        padding: 2rem 1rem;
+        margin-bottom: 1.5rem;
+        background: rgba(139, 92, 246, 0.08);
         border-radius: 20px;
         border: 1px solid rgba(139, 92, 246, 0.2);
-        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        position: relative;
-        overflow: hidden;
     }
     
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
-        transition: left 0.6s;
+    .hero-logo {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
     }
     
-    .stat-card:hover {
-        transform: translateY(-8px);
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #fff, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    
+    .hero-subtitle {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .hero {
+            padding: 1.5rem 0.75rem;
+        }
+        .hero-logo {
+            font-size: 2rem;
+        }
+        .hero-title {
+            font-size: 1.75rem;
+        }
+        .hero-subtitle {
+            font-size: 0.85rem;
+        }
+    }
+    
+    /* Stats - Compact on Mobile */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .stats {
+            gap: 0.5rem;
+        }
+    }
+    
+    .stat {
+        background: rgba(255, 255, 255, 0.04);
+        padding: 1rem;
+        border-radius: 16px;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        text-align: center;
+        transition: all 0.3s;
+    }
+    
+    .stat:hover {
         border-color: rgba(139, 92, 246, 0.5);
-        box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        transform: translateY(-2px);
     }
     
-    .stat-card:hover::before {
-        left: 100%;
+    @media (max-width: 768px) {
+        .stat {
+            padding: 0.75rem 0.5rem;
+        }
     }
     
     .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
         display: block;
+        margin-bottom: 0.25rem;
     }
     
     .stat-value {
-        font-size: 2.5rem;
+        font-size: 2rem;
         font-weight: 900;
-        color: #ffffff;
+        color: #fff;
         line-height: 1;
-        margin: 0.5rem 0;
-    }
-    
-    @media (max-width: 768px) {
-        .stat-value {
-            font-size: 2rem;
-        }
     }
     
     .stat-label {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.6);
-        font-weight: 600;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+        .stat-icon {
+            font-size: 1.25rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+        }
+        .stat-label {
+            font-size: 0.65rem;
+        }
     }
     
     /* Chat Messages */
     .stChatMessage {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border-radius: 16px !important;
-        padding: 1.5rem !important;
-        margin: 1rem 0 !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        margin: 0.75rem 0 !important;
         border: 1px solid rgba(139, 92, 246, 0.15) !important;
-        backdrop-filter: blur(10px) !important;
     }
     
     @media (max-width: 768px) {
         .stChatMessage {
-            padding: 1rem !important;
+            padding: 0.75rem !important;
+            margin: 0.5rem 0 !important;
         }
-    }
-    
-    [data-testid="stChatMessageContent"] {
-        color: rgba(255, 255, 255, 0.95) !important;
-        font-size: 1rem !important;
-        line-height: 1.7 !important;
     }
     
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%) !important;
+        background: #0a0a0a !important;
         border-right: 1px solid rgba(139, 92, 246, 0.2) !important;
     }
     
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h3 {
-        color: #ffffff !important;
-        font-size: 1.1rem !important;
+    [data-testid="stSidebar"] h3 {
+        color: #fff !important;
+        font-size: 1rem !important;
         font-weight: 700 !important;
-        margin-bottom: 1rem !important;
+        margin: 1.5rem 0 0.75rem 0 !important;
         padding-bottom: 0.5rem !important;
         border-bottom: 2px solid rgba(139, 92, 246, 0.3) !important;
     }
     
-    /* File Uploaders */
-    [data-testid="stFileUploader"] {
-        background: transparent !important;
-    }
-    
+    /* File Uploaders - Cleaner */
     [data-testid="stFileUploader"] section {
         background: rgba(139, 92, 246, 0.05) !important;
-        border: 2px dashed rgba(139, 92, 246, 0.4) !important;
-        border-radius: 16px !important;
-        padding: 2rem 1rem !important;
-        transition: all 0.3s ease !important;
+        border: 2px dashed rgba(139, 92, 246, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 1.25rem 0.75rem !important;
     }
     
     [data-testid="stFileUploader"] section:hover {
-        border-color: rgba(139, 92, 246, 0.7) !important;
-        background: rgba(139, 92, 246, 0.1) !important;
-    }
-    
-    [data-testid="stFileUploader"] label {
-        color: rgba(255, 255, 255, 0.9) !important;
-        font-weight: 600 !important;
+        border-color: rgba(139, 92, 246, 0.6) !important;
+        background: rgba(139, 92, 246, 0.08) !important;
     }
     
     /* Buttons */
     .stButton > button, .stDownloadButton > button {
-        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%) !important;
+        background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
         color: white !important;
         border: none !important;
-        padding: 0.875rem 1.5rem !important;
-        border-radius: 12px !important;
+        padding: 0.75rem 1.25rem !important;
+        border-radius: 10px !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
-        transition: all 0.3s ease !important;
         width: 100% !important;
-        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3) !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
-    
-    .stButton > button::before, .stDownloadButton > button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
+        transition: all 0.3s !important;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
     }
     
     .stButton > button:hover, .stDownloadButton > button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5) !important;
-    }
-    
-    .stButton > button:hover::before, .stDownloadButton > button:hover::before {
-        width: 300px;
-        height: 300px;
-    }
-    
-    .stButton > button:active, .stDownloadButton > button:active {
-        transform: translateY(-1px) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4) !important;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
         background: rgba(139, 92, 246, 0.08) !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         border: 1px solid rgba(139, 92, 246, 0.2) !important;
         font-weight: 600 !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        padding: 1rem !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .streamlit-expanderHeader:hover {
-        background: rgba(139, 92, 246, 0.15) !important;
-        border-color: rgba(139, 92, 246, 0.4) !important;
+        padding: 0.75rem !important;
     }
     
     /* Chat Input */
     .stChatInputContainer {
         background: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(139, 92, 246, 0.3) !important;
-        border-radius: 16px !important;
-        backdrop-filter: blur(10px) !important;
+        border-radius: 12px !important;
     }
     
     .stChatInputContainer:focus-within {
         border-color: rgba(139, 92, 246, 0.6) !important;
-        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
-    }
-    
-    /* Sliders */
-    .stSlider [data-baseweb="slider"] {
-        background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%) !important;
-    }
-    
-    /* Success/Info Messages */
-    .stSuccess {
-        background: rgba(34, 197, 94, 0.1) !important;
-        border-left: 4px solid #22c55e !important;
-        border-radius: 12px !important;
-        color: #fff !important;
-    }
-    
-    .stInfo {
-        background: rgba(59, 130, 246, 0.1) !important;
-        border-left: 4px solid #3b82f6 !important;
-        border-radius: 12px !important;
-        color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
     }
     
     /* Hide defaults */
@@ -380,23 +256,17 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Better scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+    /* Success/Info */
+    .stSuccess {
+        background: rgba(34, 197, 94, 0.1) !important;
+        border-left: 3px solid #22c55e !important;
+        border-radius: 8px !important;
     }
     
-    ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: rgba(139, 92, 246, 0.5);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: rgba(139, 92, 246, 0.7);
+    .stInfo {
+        background: rgba(59, 130, 246, 0.1) !important;
+        border-left: 3px solid #3b82f6 !important;
+        border-radius: 8px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -406,15 +276,12 @@ def extract_pdf_text(pdf_file):
     try:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ""
-        pages = len(pdf_reader.pages)
-        
-        for i, page in enumerate(pdf_reader.pages):
+        for page in pdf_reader.pages:
             try:
                 text += page.extract_text() + "\n"
             except:
                 pass
-        
-        return text.strip(), pages
+        return text.strip(), len(pdf_reader.pages)
     except Exception as e:
         st.error(f"Error reading PDF: {str(e)}")
         return None, 0
@@ -450,12 +317,10 @@ def export_chat_json():
     return json.dumps(export_data, indent=2)
 
 def export_chat_markdown():
-    markdown = f"# GeminiFlow Chat Session\n\n"
-    markdown += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    markdown += f"**Messages:** {len(st.session_state.messages)}\n\n---\n\n"
+    markdown = f"# GeminiFlow Chat\n\n"
+    markdown += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
     for i, msg in enumerate(st.session_state.messages, 1):
-        markdown += f"## Message {i}\n\n**User:** {msg['user']}\n\n"
-        markdown += f"**Assistant:** {msg['bot']}\n\n---\n\n"
+        markdown += f"## Message {i}\n\n**User:** {msg['user']}\n\n**Assistant:** {msg['bot']}\n\n---\n\n"
     return markdown
 
 def extract_table_from_text(text):
@@ -482,7 +347,6 @@ def extract_table_from_text(text):
             if line.strip():
                 row = [cell.strip() for cell in line.split('|')[1:-1]]
                 data.append(row)
-        
         if data:
             return pd.DataFrame(data, columns=headers)
     except:
@@ -510,20 +374,12 @@ def get_gemini_response(question, history, image=None, pdf_text=None):
         if history:
             context += "=== Previous Conversation ===\n"
             for msg in history[-5:]:
-                context += f"\nUser: {msg['user']}\n"
-                context += f"Assistant: {msg['bot'][:200]}...\n" if len(msg['bot']) > 200 else f"Assistant: {msg['bot']}\n"
+                context += f"\nUser: {msg['user']}\nAssistant: {msg['bot'][:200]}...\n"
         
         if pdf_text:
-            context += f"\n\n=== Document Content ===\n{pdf_text[:8000]}"
+            context += f"\n\n=== Document ===\n{pdf_text[:8000]}"
         
-        formatting = """
-FORMATTING INSTRUCTIONS:
-- Use markdown tables with | separators for data
-- Show calculations step-by-step
-- Format for Excel export compatibility
-"""
-        
-        full_prompt = f"{formatting}\n\n{context}\n\nUser: {question}\nAssistant:"
+        prompt = f"Use markdown tables for data. Show calculations step-by-step.\n\n{context}\n\nUser: {question}\nAssistant:"
         
         config = {
             "temperature": st.session_state.temperature,
@@ -531,12 +387,11 @@ FORMATTING INSTRUCTIONS:
         }
         
         if image:
-            response = model.generate_content([full_prompt, image], generation_config=config)
+            response = model.generate_content([prompt, image], generation_config=config)
         else:
-            response = model.generate_content(full_prompt, generation_config=config)
+            response = model.generate_content(prompt, generation_config=config)
         
         return response.text
-    
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
@@ -556,29 +411,29 @@ if "temperature" not in st.session_state:
 if "max_tokens" not in st.session_state:
     st.session_state.max_tokens = 2048
 
-# Hero Section - CLEAN & MODERN
+# Hero - Clean & Simple
 st.markdown("""
-<div class="hero-section">
-    <div class="logo">✨</div>
-    <div class="brand-name">GeminiFlow</div>
-    <div class="tagline">Excel Export • Image Analysis • PDF Processing</div>
+<div class="hero">
+    <div class="hero-logo">✨</div>
+    <h1 class="hero-title">GeminiFlow</h1>
+    <p class="hero-subtitle">Excel Export • Image Analysis • PDF Processing</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Stats Grid - CLEAN DESIGN
+# Stats - Clean Grid
 st.markdown(f"""
-<div class="stat-grid">
-    <div class="stat-card">
+<div class="stats">
+    <div class="stat">
         <span class="stat-icon">💬</span>
         <div class="stat-value">{len(st.session_state.messages)}</div>
         <div class="stat-label">Messages</div>
     </div>
-    <div class="stat-card">
+    <div class="stat">
         <span class="stat-icon">🖼️</span>
         <div class="stat-value">{'1' if st.session_state.uploaded_image else '0'}</div>
         <div class="stat-label">Images</div>
     </div>
-    <div class="stat-card">
+    <div class="stat">
         <span class="stat-icon">📄</span>
         <div class="stat-value">{'1' if st.session_state.uploaded_pdf else '0'}</div>
         <div class="stat-label">Documents</div>
@@ -586,42 +441,38 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# SIDEBAR - IMPROVED DESIGN
+# Sidebar - Clean & Organized
 with st.sidebar:
-    st.markdown("### ⚙️ Controls")
+    st.markdown("### ⚙️ Settings")
     
-    with st.expander("🎛️ Model Settings"):
+    with st.expander("🎛️ Model Config"):
         st.session_state.temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1)
         st.session_state.max_tokens = st.slider("Max Tokens", 256, 8192, 2048, 256)
     
-    st.markdown("### 📁 Upload Files")
+    st.markdown("### 📤 Upload")
     
-    # IMAGE UPLOAD
-    uploaded_image = st.file_uploader("📸 Upload Image", type=['png', 'jpg', 'jpeg', 'webp'], key="img_upload")
+    uploaded_image = st.file_uploader("📸 Image", type=['png', 'jpg', 'jpeg', 'webp'])
     if uploaded_image:
         st.session_state.uploaded_image = uploaded_image
         st.success(f"✅ {uploaded_image.name}")
-        st.caption(f"Size: {get_file_size(uploaded_image)}")
         img = process_image(uploaded_image)
         if img:
             st.image(img, use_container_width=True)
-        if st.button("🗑️ Remove Image", use_container_width=True):
+        if st.button("🗑️ Remove", key="rm_img"):
             st.session_state.uploaded_image = None
             st.rerun()
     
-    # PDF UPLOAD
-    uploaded_pdf = st.file_uploader("📄 Upload PDF", type=['pdf'], key="pdf_upload")
+    uploaded_pdf = st.file_uploader("📄 PDF", type=['pdf'])
     if uploaded_pdf:
         st.session_state.uploaded_pdf = uploaded_pdf
         st.success(f"✅ {uploaded_pdf.name}")
-        st.caption(f"Size: {get_file_size(uploaded_pdf)}")
         if st.session_state.pdf_text is None:
-            with st.spinner("📖 Reading PDF..."):
+            with st.spinner("📖 Reading..."):
                 text, pages = extract_pdf_text(uploaded_pdf)
                 if text:
                     st.session_state.pdf_text = text
-                    st.info(f"📑 {pages} pages • {len(text.split())} words")
-        if st.button("🗑️ Remove PDF", use_container_width=True):
+                    st.info(f"📑 {pages} pages")
+        if st.button("🗑️ Remove", key="rm_pdf"):
             st.session_state.uploaded_pdf = None
             st.session_state.pdf_text = None
             st.rerun()
@@ -639,42 +490,26 @@ with st.sidebar:
                 del st.session_state[key]
             st.rerun()
     
-    # EXPORT
     if st.session_state.messages:
         st.markdown("### 📥 Export")
-        
-        st.download_button(
-            "💬 Markdown",
-            data=export_chat_markdown(),
-            file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
-        
-        st.download_button(
-            "📊 JSON",
-            data=export_chat_json(),
-            file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            mime="application/json",
-            use_container_width=True
-        )
+        st.download_button("💬 Markdown", export_chat_markdown(),
+                         f"chat_{datetime.now().strftime('%Y%m%d')}.md", "text/markdown", use_container_width=True)
+        st.download_button("📊 JSON", export_chat_json(),
+                         f"chat_{datetime.now().strftime('%Y%m%d')}.json", "application/json", use_container_width=True)
 
 # Chat Display
 if not st.session_state.messages:
     with st.chat_message("assistant", avatar="✨"):
         st.markdown("""
-        ### 👋 Welcome to GeminiFlow!
+        **👋 Welcome!**
         
-        **What I can do:**
-        - 📊 **Excel Export** - Convert tables to spreadsheets
-        - 🖼️ **Image Analysis** - Understand and extract from images
-        - 📄 **PDF Processing** - Analyze documents
-        - 🔢 **Math Solutions** - Step-by-step calculations
+        I can help you with:
+        - 📊 Excel exports from tables
+        - 🖼️ Image analysis
+        - 📄 PDF processing
+        - 🔢 Math solutions
         
-        **Get Started:**
-        1. Upload files via sidebar
-        2. Ask your question
-        3. Download Excel if response has tables
+        Upload files via sidebar and ask me anything!
         """)
 
 for i, msg in enumerate(st.session_state.messages):
@@ -684,18 +519,13 @@ for i, msg in enumerate(st.session_state.messages):
     with st.chat_message("assistant", avatar="✨"):
         st.markdown(msg["bot"])
         
-        # Excel export
         if '|' in msg["bot"] and '-|-' in msg["bot"]:
             excel_data = create_excel_from_response(msg["bot"])
             if excel_data:
-                st.download_button(
-                    "📥 Download Excel",
-                    data=excel_data,
-                    file_name=f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=f"excel_{i}",
-                    use_container_width=True
-                )
+                st.download_button("📥 Excel", excel_data,
+                                 f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                 key=f"xl_{i}", use_container_width=True)
 
 # Chat Input
 if prompt := st.chat_input("💭 Ask me anything..."):
@@ -708,39 +538,17 @@ if prompt := st.chat_input("💭 Ask me anything..."):
     
     with st.chat_message("assistant", avatar="✨"):
         with st.spinner("✨ Thinking..."):
-            response = get_gemini_response(
-                prompt,
-                st.session_state.messages,
-                image=image_data,
-                pdf_text=st.session_state.pdf_text
-            )
-        
+            response = get_gemini_response(prompt, st.session_state.messages,
+                                         image=image_data, pdf_text=st.session_state.pdf_text)
         st.markdown(response)
         
-        # Excel export
         if '|' in response and '-|-' in response:
             excel_data = create_excel_from_response(response)
             if excel_data:
-                st.download_button(
-                    "📥 Download Excel",
-                    data=excel_data,
-                    file_name=f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="excel_current",
-                    use_container_width=True
-                )
+                st.download_button("📥 Excel", excel_data,
+                                 f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                 key="xl_new", use_container_width=True)
     
-    st.session_state.messages.append({
-        "user": prompt,
-        "bot": response,
-        "timestamp": datetime.now().isoformat()
-    })
+    st.session_state.messages.append({"user": prompt, "bot": response, "timestamp": datetime.now().isoformat()})
     st.rerun()
-
-# Footer
-st.divider()
-st.markdown("""
-<div style='text-align: center; padding: 1.5rem; color: rgba(255,255,255,0.5); font-size: 0.9rem;'>
-    <strong>GeminiFlow</strong> • Powered by Gemini 2.0 Flash • Created by Brijesh Singh
-</div>
-""", unsafe_allow_html=True)
