@@ -11,200 +11,158 @@ import re
 import pandas as pd
 from io import BytesIO
 
+# Load environment variables
 load_dotenv()
 
+# Get API key
 if hasattr(st, 'secrets') and 'GOOGLE_API_KEY' in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
 else:
     api_key = os.getenv("GOOGLE_API_KEY")
 
 if not api_key:
-    st.error("⚠️ GOOGLE_API_KEY not found!")
+    st.error("⚠️ GOOGLE_API_KEY not found! Add it to .env file or Streamlit secrets")
+    st.info("Get your key from: https://makersuite.google.com/app/apikey")
     st.stop()
 
 genai.configure(api_key=api_key)
+
+# Initialize Gemini model
 model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
+# Page config
 st.set_page_config(
-    page_title="GeminiFlow",
+    page_title="Gemini AI Assistant",
     page_icon="✨",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap');
-    
-    * { font-family: 'Inter', sans-serif; }
-    
-    .main, .stApp {
-        background: #0a0a0a;
-        color: #fff;
+    .main {
+        background-color: #0e1117;
     }
-    
-    .block-container {
-        padding: 1rem !important;
-        max-width: 1200px !important;
-    }
-    
-    /* Hero */
-    .hero {
-        text-align: center;
-        padding: 1.5rem 1rem;
-        margin-bottom: 1rem;
-        background: rgba(139, 92, 246, 0.08);
-        border-radius: 20px;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-    
-    .hero-logo { font-size: 2.5rem; }
-    .hero-title {
-        font-size: 2rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #fff, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0.25rem 0;
-    }
-    .hero-subtitle {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.85rem;
-    }
-    
-    /* Stats */
-    .stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat {
-        background: rgba(255, 255, 255, 0.04);
-        padding: 0.75rem 0.5rem;
-        border-radius: 12px;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        text-align: center;
-    }
-    
-    .stat-icon { font-size: 1.25rem; }
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 900;
-        color: #fff;
-        margin: 0.25rem 0;
-    }
-    .stat-label {
-        font-size: 0.65rem;
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: uppercase;
-    }
-    
-    /* Chat */
     .stChatMessage {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border-radius: 12px !important;
-        padding: 0.75rem !important;
-        margin: 0.5rem 0 !important;
-        border: 1px solid rgba(139, 92, 246, 0.15) !important;
+        background-color: rgba(38, 39, 48, 0.8);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 8px 0;
+        border: 1px solid rgba(250, 250, 250, 0.1);
     }
-    
-    /* File Upload */
-    [data-testid="stFileUploader"] section {
-        background: rgba(139, 92, 246, 0.05) !important;
-        border: 2px dashed rgba(139, 92, 246, 0.3) !important;
-        border-radius: 10px !important;
-        padding: 1rem 0.5rem !important;
+    [data-testid="stChatMessageContent"] {
+        color: #fafafa;
+        font-size: 15px;
+        line-height: 1.6;
     }
-    
-    /* Buttons */
-    .stButton > button, .stDownloadButton > button {
-        background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
-        color: white !important;
-        border: none !important;
-        padding: 0.65rem 1rem !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        width: 100% !important;
-        font-size: 0.9rem !important;
+    [data-testid="stSidebar"] {
+        background-color: #1a1d24;
+        border-right: 1px solid rgba(250, 250, 250, 0.1);
     }
-    
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4) !important;
+    h1 {
+        color: #8b5cf6;
+        text-align: center;
+        font-size: 2.5rem !important;
+        margin-bottom: 0.5rem;
     }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: rgba(139, 92, 246, 0.08) !important;
-        border-radius: 8px !important;
-        border: 1px solid rgba(139, 92, 246, 0.2) !important;
-        font-weight: 600 !important;
-        padding: 0.65rem !important;
-        font-size: 0.9rem !important;
+    h3 {
+        color: #a78bfa;
+        margin-top: 1.5rem;
     }
-    
-    /* Chat Input */
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    [data-testid="stFileUploader"] {
+        background-color: rgba(139, 92, 246, 0.05);
+        border: 2px dashed rgba(139, 92, 246, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+    }
     .stChatInputContainer {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(139, 92, 246, 0.3) !important;
-        border-radius: 12px !important;
+        border-radius: 10px;
+        border: 2px solid rgba(139, 92, 246, 0.3);
+        background-color: rgba(38, 39, 48, 0.6);
     }
-    
-    /* Success */
-    .stSuccess {
-        background: rgba(34, 197, 94, 0.1) !important;
-        border-left: 3px solid #22c55e !important;
-        border-radius: 6px !important;
-        padding: 0.5rem !important;
-        font-size: 0.85rem !important;
-    }
-    
-    .stInfo {
-        background: rgba(59, 130, 246, 0.1) !important;
-        border-left: 3px solid #3b82f6 !important;
-        border-radius: 6px !important;
-        padding: 0.5rem !important;
-        font-size: 0.85rem !important;
-    }
-    
-    /* Section Headers */
-    .section-header {
-        color: #fff;
-        font-size: 1.1rem;
+    [data-testid="stMetricValue"] {
+        font-size: 22px;
         font-weight: 700;
-        margin: 1rem 0 0.5rem 0;
-        padding-bottom: 0.4rem;
-        border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+        color: #8b5cf6;
     }
-    
-    #MainMenu, footer, header { visibility: hidden; }
+    .streamlit-expanderHeader {
+        background-color: rgba(139, 92, 246, 0.1);
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    hr {
+        border: none;
+        height: 1px;
+        background: rgba(250, 250, 250, 0.1);
+        margin: 20px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
+# Helper functions
 def extract_pdf_text(pdf_file):
+    """Extract text from PDF"""
     try:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ""
-        for page in pdf_reader.pages:
+        pages = len(pdf_reader.pages)
+        
+        if pages > 10:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+        
+        for i, page in enumerate(pdf_reader.pages):
             try:
                 text += page.extract_text() + "\n"
-            except:
-                pass
-        return text.strip(), len(pdf_reader.pages)
-    except:
+                if pages > 10:
+                    progress = (i + 1) / pages
+                    progress_bar.progress(progress)
+                    status_text.text(f"Processing page {i+1}/{pages}")
+            except Exception as e:
+                st.warning(f"⚠️ Could not read page {i+1}: {str(e)}")
+        
+        if pages > 10:
+            progress_bar.empty()
+            status_text.empty()
+        
+        return text.strip(), pages
+    except Exception as e:
+        st.error(f"Error reading PDF: {str(e)}")
         return None, 0
 
 def process_image(image_file):
+    """Process uploaded image"""
     try:
         img = Image.open(image_file)
-        if img.width > 4096 or img.height > 4096:
-            img.thumbnail((4096, 4096), Image.Resampling.LANCZOS)
+        max_size = 4096
+        if img.width > max_size or img.height > max_size:
+            st.warning(f"⚠️ Image resized from {img.width}x{img.height}")
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
         return img
-    except:
+    except Exception as e:
+        st.error(f"Error processing image: {str(e)}")
         return None
 
 def get_file_size(file):
+    """Get human-readable file size"""
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
@@ -212,61 +170,151 @@ def get_file_size(file):
         if size < 1024.0:
             return f"{size:.1f} {unit}"
         size /= 1024.0
+    return f"{size:.1f} TB"
 
 def export_chat_json():
-    data = {"session": st.session_state.session_start.isoformat(), "messages": st.session_state.messages}
-    return json.dumps(data, indent=2)
+    """Export chat as JSON"""
+    export_data = {
+        "session_start": st.session_state.session_start.isoformat(),
+        "export_time": datetime.now().isoformat(),
+        "message_count": len(st.session_state.messages),
+        "messages": st.session_state.messages
+    }
+    return json.dumps(export_data, indent=2)
 
 def export_chat_markdown():
-    md = f"# GeminiFlow Chat\n\n**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+    """Export chat as markdown"""
+    markdown = f"# Gemini AI Chat Session\n\n"
+    markdown += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    markdown += f"**Messages:** {len(st.session_state.messages)}\n\n---\n\n"
     for i, msg in enumerate(st.session_state.messages, 1):
-        md += f"## Message {i}\n\n**User:** {msg['user']}\n\n**Assistant:** {msg['bot']}\n\n---\n\n"
-    return md
+        markdown += f"## Message {i}\n\n**👤 User:**\n{msg['user']}\n\n"
+        markdown += f"**✨ Assistant:**\n{msg['bot']}\n\n"
+        if msg.get('has_image'):
+            markdown += "*[Image was attached]*\n\n"
+        if msg.get('has_pdf'):
+            markdown += "*[PDF document was attached]*\n\n"
+        markdown += "---\n\n"
+    return markdown
 
 def extract_table_from_text(text):
+    """Extract markdown table and convert to DataFrame"""
     lines = text.split('\n')
-    table_lines = [line.strip() for line in lines if '|' in line and not re.match(r'^\|[\s\-:]+\|', line.strip())]
-    if len(table_lines) < 2:
+    table_lines = []
+    in_table = False
+    
+    for line in lines:
+        if '|' in line:
+            in_table = True
+            cleaned = line.strip()
+            if cleaned and not re.match(r'^\|[\s\-:]+\|', cleaned):
+                table_lines.append(cleaned)
+        elif in_table and line.strip() == '':
+            break
+    
+    if not table_lines:
         return None
+    
     try:
         headers = [h.strip() for h in table_lines[0].split('|')[1:-1]]
-        data = [[c.strip() for c in line.split('|')[1:-1]] for line in table_lines[1:]]
-        return pd.DataFrame(data, columns=headers)
+        data = []
+        for line in table_lines[1:]:
+            if line.strip():
+                row = [cell.strip() for cell in line.split('|')[1:-1]]
+                data.append(row)
+        
+        if data:
+            df = pd.DataFrame(data, columns=headers)
+            return df
     except:
         return None
+    return None
 
-def create_excel_from_response(text):
-    df = extract_table_from_text(text)
+def create_excel_from_response(response_text):
+    """Create Excel file from response table"""
+    df = extract_table_from_text(response_text)
     if df is None:
         return None
+    
     output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name='Data', index=False)
-    output.seek(0)
-    return output.getvalue()
+    try:
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Data', index=False)
+            worksheet = writer.sheets['Data']
+            for idx, col in enumerate(df.columns):
+                max_length = max(df[col].astype(str).apply(len).max(), len(str(col))) + 2
+                worksheet.column_dimensions[chr(65 + idx)].width = max_length
+        output.seek(0)
+        return output.getvalue()
+    except Exception as e:
+        st.error(f"Error creating Excel: {str(e)}")
+        return None
 
 def get_gemini_response(question, history, image=None, pdf_text=None):
+    """Generate response from Gemini"""
     try:
         context = ""
-        if history:
-            for msg in history[-3:]:
-                context += f"\nUser: {msg['user']}\nAssistant: {msg['bot'][:150]}...\n"
-        if pdf_text:
-            context += f"\n\nDocument:\n{pdf_text[:6000]}"
         
-        prompt = f"Use markdown tables. Show step-by-step.\n\n{context}\n\nUser: {question}\nAssistant:"
-        config = {"temperature": st.session_state.temperature, "max_output_tokens": st.session_state.max_tokens}
+        if history:
+            context += "=== Previous Conversation ===\n"
+            for msg in history[-5:]:
+                context += f"\nUser: {msg['user']}\n"
+                context += f"Assistant: {msg['bot'][:200]}...\n" if len(msg['bot']) > 200 else f"Assistant: {msg['bot']}\n"
+        
+        if pdf_text:
+            max_pdf_chars = 8000
+            truncated = pdf_text[:max_pdf_chars]
+            context += f"\n\n=== Document Content ===\n{truncated}"
+            if len(pdf_text) > max_pdf_chars:
+                context += f"\n\n[Note: Document truncated. Total length: {len(pdf_text)} characters]"
+        
+        formatting_instructions = """
+IMPORTANT FORMATTING INSTRUCTIONS:
+When providing responses with numerical data, tables, calculations, or Excel-related content:
+1. ALWAYS use proper markdown tables with | separators and alignment
+2. Format all calculations clearly showing: Formula → Calculation → Result
+3. For Excel formulas, present them in code blocks or clearly formatted
+4. Make tables directly copyable to Excel with proper column alignment
+5. Use clear headers and organize data in rows and columns
+6. Show step-by-step calculations for math problems
+7. Present financial/numerical data in professional table format
+8. Include units and proper number formatting
+
+Example table format:
+| Item | Formula | Calculation | Result |
+|------|---------|-------------|--------|
+| Sales Growth 5% | Base × 1.05 | 628 × 1.05 | 659.40 |
+"""
+        
+        if context:
+            full_prompt = f"{formatting_instructions}\n\n{context}\n\n=== Current Question ===\nUser: {question}\nAssistant:"
+        else:
+            full_prompt = f"{formatting_instructions}\n\nUser: {question}\nAssistant:"
+        
+        generation_config = {
+            "temperature": st.session_state.temperature,
+            "max_output_tokens": st.session_state.max_tokens,
+        }
         
         if image:
-            response = model.generate_content([prompt, image], generation_config=config)
+            response = model.generate_content([full_prompt, image], generation_config=generation_config)
         else:
-            response = model.generate_content(prompt, generation_config=config)
+            response = model.generate_content(full_prompt, generation_config=generation_config)
         
         return response.text
+    
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        error = str(e)
+        if "quota" in error.lower() or "resource_exhausted" in error.lower():
+            return "⚠️ **API Quota Exceeded**\n\nPlease wait and try again."
+        elif "safety" in error.lower():
+            return "⚠️ **Content Filtered**\n\nTry rephrasing your question."
+        elif "invalid_argument" in error.lower():
+            return "⚠️ **Invalid Request**\n\nCheck file size/format."
+        else:
+            return f"❌ **Error:** {error}"
 
-# Session state
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "uploaded_image" not in st.session_state:
@@ -282,199 +330,280 @@ if "temperature" not in st.session_state:
 if "max_tokens" not in st.session_state:
     st.session_state.max_tokens = 2048
 
-# Hero
-st.markdown("""
-<div class="hero">
-    <div class="hero-logo">✨</div>
-    <h1 class="hero-title">GeminiFlow</h1>
-    <p class="hero-subtitle">Excel Export • Image Analysis • PDF Processing</p>
-</div>
-""", unsafe_allow_html=True)
+# Header
+st.title("✨ Gemini AI Assistant")
+st.markdown("<p style='text-align: center; color: rgba(250,250,250,0.6); font-size: 16px;'>Excel Export • Image Analysis • PDF Processing</p>", unsafe_allow_html=True)
 
-# Stats
-st.markdown(f"""
-<div class="stats">
-    <div class="stat">
-        <div class="stat-icon">💬</div>
-        <div class="stat-value">{len(st.session_state.messages)}</div>
-        <div class="stat-label">Messages</div>
-    </div>
-    <div class="stat">
-        <div class="stat-icon">🖼️</div>
-        <div class="stat-value">{'1' if st.session_state.uploaded_image else '0'}</div>
-        <div class="stat-label">Images</div>
-    </div>
-    <div class="stat">
-        <div class="stat-icon">📄</div>
-        <div class="stat-value">{'1' if st.session_state.uploaded_pdf else '0'}</div>
-        <div class="stat-label">Documents</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ===== CONTROLS IN MAIN AREA =====
-
-# Settings Expander
-with st.expander("⚙️ Settings & Model Configuration", expanded=False):
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.temperature = st.slider(
-            "🌡️ Temperature", 
-            0.0, 1.0, 0.7, 0.1,
-            help="Higher = creative, Lower = focused"
-        )
-    with col2:
-        st.session_state.max_tokens = st.slider(
-            "📏 Max Tokens", 
-            256, 8192, 2048, 256,
-            help="Maximum response length"
-        )
-
-# Upload Files Section
-st.markdown('<div class="section-header">📤 Upload Files</div>', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    uploaded_image = st.file_uploader("📸 Upload Image", type=['png', 'jpg', 'jpeg', 'webp'], key="img")
+# Sidebar
+with st.sidebar:
+    st.markdown("### 🎛️ Control Center")
+    
+    with st.expander("📊 Session Stats", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Messages", len(st.session_state.messages))
+        with col2:
+            duration = datetime.now() - st.session_state.session_start
+            mins = duration.seconds // 60
+            st.metric("Duration", f"{mins}m")
+    
+    st.divider()
+    
+    with st.expander("⚡ Quick Prompts"):
+        st.markdown("**Click to use:**")
+        quick_prompts = {
+            "📊 Excel Table": "Create a markdown table with this data in Excel-ready format with proper calculations",
+            "🔢 Math Solution": "Solve this step-by-step showing all calculations clearly",
+            "📈 Financial Analysis": "Analyze this financial data and present in a professional table format",
+            "📋 Summarize PDF": "Summarize the key points from this document in bullet points",
+            "🖼️ Extract Data": "Extract all numerical data from this image and organize in a table"
+        }
+        for label, prompt in quick_prompts.items():
+            if st.button(label, key=f"quick_{label}", use_container_width=True):
+                st.info(f"💡 '{prompt}'\n\nNow add your details!")
+    
+    st.divider()
+    
+    with st.expander("⚙️ Model Settings"):
+        st.session_state.temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1)
+        st.session_state.max_tokens = st.slider("Max Tokens", 256, 8192, 2048, 256)
+    
+    st.divider()
+    
+    st.markdown("### 📁 Upload Files")
+    
+    uploaded_image = st.file_uploader("🖼️ Upload Image", type=['png', 'jpg', 'jpeg', 'webp', 'gif'])
     if uploaded_image:
         st.session_state.uploaded_image = uploaded_image
         st.success(f"✅ {uploaded_image.name}")
-        st.caption(f"Size: {get_file_size(uploaded_image)}")
+        st.caption(f"📦 {get_file_size(uploaded_image)}")
         img = process_image(uploaded_image)
         if img:
             st.image(img, use_container_width=True)
-        if st.button("🗑️ Remove Image", use_container_width=True, key="rm_img"):
+            st.caption(f"📐 {img.width}x{img.height}")
+        if st.button("🗑️ Remove Image"):
             st.session_state.uploaded_image = None
             st.rerun()
-
-with col2:
-    uploaded_pdf = st.file_uploader("📄 Upload PDF", type=['pdf'], key="pdf")
+    
+    uploaded_pdf = st.file_uploader("📄 Upload PDF", type=['pdf'])
     if uploaded_pdf:
         st.session_state.uploaded_pdf = uploaded_pdf
         st.success(f"✅ {uploaded_pdf.name}")
-        st.caption(f"Size: {get_file_size(uploaded_pdf)}")
+        st.caption(f"📦 {get_file_size(uploaded_pdf)}")
         if st.session_state.pdf_text is None:
-            with st.spinner("📖 Reading..."):
+            with st.spinner("Reading PDF..."):
                 text, pages = extract_pdf_text(uploaded_pdf)
                 if text:
                     st.session_state.pdf_text = text
-                    st.info(f"📑 {pages} pages • {len(text.split())} words")
+                    word_count = len(text.split())
+                    st.info(f"📑 {pages} pages • {word_count:,} words")
         else:
-            st.info(f"📑 {len(st.session_state.pdf_text.split())} words")
-        if st.button("🗑️ Remove PDF", use_container_width=True, key="rm_pdf"):
+            word_count = len(st.session_state.pdf_text.split())
+            st.info(f"📑 {word_count:,} words extracted")
+        if st.button("🗑️ Remove PDF"):
             st.session_state.uploaded_pdf = None
             st.session_state.pdf_text = None
             st.rerun()
-
-# Actions Section
-st.markdown('<div class="section-header">⚡ Actions</div>', unsafe_allow_html=True)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button("🧹 Clear Chat", use_container_width=True):
-        st.session_state.messages = []
-        st.rerun()
-
-with col2:
-    if st.button("🔄 Reset All", use_container_width=True):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-
-with col3:
+    
+    st.divider()
+    
+    st.markdown("### ⚡ Quick Actions")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🧹 Clear Chat"):
+            st.session_state.messages = []
+            st.rerun()
+    with col2:
+        if st.button("🔄 Reset All"):
+            st.session_state.messages = []
+            st.session_state.uploaded_image = None
+            st.session_state.uploaded_pdf = None
+            st.session_state.pdf_text = None
+            st.session_state.session_start = datetime.now()
+            st.rerun()
+    
     if st.session_state.messages:
-        with st.popover("📥 Export", use_container_width=True):
-            st.download_button(
-                "💬 Markdown (.md)",
-                export_chat_markdown(),
-                f"chat_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
-                "text/markdown",
-                use_container_width=True
-            )
-            st.download_button(
-                "📊 JSON",
-                export_chat_json(),
-                f"chat_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
-                "application/json",
-                use_container_width=True
-            )
-
-st.divider()
-
-# Chat Display
-if not st.session_state.messages:
-    with st.chat_message("assistant", avatar="✨"):
+        st.markdown("### 📥 Export")
+        has_tables = any('|' in msg['bot'] and '-|-' in msg['bot'] for msg in st.session_state.messages)
+        if has_tables:
+            st.caption("💡 Excel buttons appear below table responses")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button("💬 Chat (TXT)", data=export_chat_markdown(),
+                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                             mime="text/markdown", use_container_width=True)
+        with col2:
+            st.download_button("📊 Chat (JSON)", data=export_chat_json(),
+                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                             mime="application/json", use_container_width=True)
+    
+    st.divider()
+    
+    with st.expander("🤖 About"):
         st.markdown("""
-        **👋 Welcome to GeminiFlow!**
+        **Model:** gemini-2.0-flash-exp
         
-        I can help you with:
-        - 📊 **Excel exports** from tables
-        - 🖼️ **Image analysis**
-        - 📄 **PDF processing**
-        - 🔢 **Math solutions**
-        
-        Upload files above and ask me anything!
+        **Features:**
+        - 💬 Chat & Q&A
+        - 📊 Excel Export (auto)
+        - 🔢 Math Solutions
+        - 🖼️ Image Analysis
+        - 📄 PDF Processing
         """)
 
-for i, msg in enumerate(st.session_state.messages):
-    with st.chat_message("user", avatar="👤"):
-        st.markdown(msg["user"])
-    
-    with st.chat_message("assistant", avatar="✨"):
-        st.markdown(msg["bot"])
-        
-        if '|' in msg["bot"] and '-|-' in msg["bot"]:
-            excel = create_excel_from_response(msg["bot"])
-            if excel:
-                st.download_button(
-                    "📥 Download Excel",
-                    excel,
-                    f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=f"xl_{i}",
-                    use_container_width=True
-                )
+# Main chat
+chat_container = st.container()
 
-# Chat Input
-if prompt := st.chat_input("💭 Ask me anything..."):
+with chat_container:
+    if not st.session_state.messages:
+        with st.chat_message("assistant", avatar="✨"):
+            st.markdown("""
+            👋 **Welcome! I'm your Gemini AI Assistant**
+            
+            I can help you with:
+            - 📊 **Excel & Data** - Tables auto-export to Excel
+            - 🔢 **Math Problems** - Step-by-step solutions
+            - 🖼️ **Image Analysis** - Extract data, analyze charts
+            - 📄 **PDFs** - Summarize and extract info
+            
+            **💡 Pro Tips:**
+            - Ask for "markdown table format" for Excel
+            - Use Quick Prompts in sidebar
+            - Excel download appears automatically for tables
+            
+            Let's go! 🚀
+            """)
+    
+    for i, msg in enumerate(st.session_state.messages):
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(msg["user"])
+            tags = []
+            if msg.get("has_image"):
+                tags.append("🖼️")
+            if msg.get("has_pdf"):
+                tags.append("📄")
+            if tags:
+                st.caption(" ".join(tags))
+        
+        with st.chat_message("assistant", avatar="✨"):
+            st.markdown(msg["bot"])
+            
+            if '|' in msg["bot"] and '-|-' in msg["bot"]:
+                col_a, col_b = st.columns([1, 4])
+                with col_a:
+                    excel_data = create_excel_from_response(msg["bot"])
+                    if excel_data:
+                        st.download_button("📥 Excel", data=excel_data,
+                                         file_name=f"data_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                         key=f"excel_{i}")
+                with col_b:
+                    with st.expander("📋 Copy Raw"):
+                        st.code(msg["bot"], language="markdown")
+            elif '```' in msg["bot"]:
+                with st.expander("📋 Copy Raw"):
+                    st.code(msg["bot"], language="markdown")
+            
+            if "timestamp" in msg:
+                try:
+                    ts = datetime.fromisoformat(msg["timestamp"])
+                    st.caption(f"🕒 {ts.strftime('%I:%M %p')}")
+                except:
+                    pass
+
+# Chat input
+if prompt := st.chat_input("💭 Message Gemini..."):
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
+        context_tags = []
+        if st.session_state.uploaded_image:
+            context_tags.append("🖼️")
+        if st.session_state.uploaded_pdf:
+            context_tags.append("📄")
+        if context_tags:
+            st.caption(" ".join(context_tags))
     
-    img_data = None
+    image_data = None
     if st.session_state.uploaded_image:
-        img_data = process_image(st.session_state.uploaded_image)
+        image_data = process_image(st.session_state.uploaded_image)
     
     with st.chat_message("assistant", avatar="✨"):
-        with st.spinner("✨ Thinking..."):
+        message_placeholder = st.empty()
+        
+        with st.spinner("🤔 Thinking..."):
             response = get_gemini_response(prompt, st.session_state.messages, 
-                                         image=img_data, pdf_text=st.session_state.pdf_text)
-        st.markdown(response)
+                                         image=image_data, pdf_text=st.session_state.pdf_text)
+        
+        full_text = ""
+        words = response.split()
+        for i, word in enumerate(words):
+            full_text += word + " "
+            if i % 3 == 0 or i == len(words) - 1:
+                message_placeholder.markdown(full_text + "▌")
+                time.sleep(0.03)
+        message_placeholder.markdown(response)
         
         if '|' in response and '-|-' in response:
-            excel = create_excel_from_response(response)
-            if excel:
-                st.download_button(
-                    "📥 Download Excel",
-                    excel,
-                    f"table_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="xl_new",
-                    use_container_width=True
-                )
+            col_a, col_b = st.columns([1, 4])
+            with col_a:
+                excel_data = create_excel_from_response(response)
+                if excel_data:
+                    st.download_button("📥 Excel", data=excel_data,
+                                     file_name=f"data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                     key="excel_current")
+            with col_b:
+                with st.expander("📋 Copy Raw"):
+                    st.code(response, language="markdown")
+        elif '```' in response:
+            with st.expander("📋 Copy Raw"):
+                st.code(response, language="markdown")
+        
+        st.caption(f"🕒 {datetime.now().strftime('%I:%M %p')}")
     
     st.session_state.messages.append({
-        "user": prompt,
-        "bot": response,
+        "user": prompt, "bot": response,
+        "has_image": st.session_state.uploaded_image is not None,
+        "has_pdf": st.session_state.uploaded_pdf is not None,
         "timestamp": datetime.now().isoformat()
     })
     st.rerun()
 
 # Footer
 st.divider()
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    with st.expander("💡 Tips"):
+        st.markdown("""
+        - Be specific
+        - Upload files first
+        - Use Quick Prompts
+        - Clear chat when switching topics
+        """)
+
+with col2:
+    with st.expander("📊 Excel Export"):
+        st.markdown("""
+        **Auto Excel Download:**
+        - Ask for "table format"
+        - Click "📥 Excel" below response
+        - Downloads just the table
+        - No chat history included
+        """)
+
+with col3:
+    with st.expander("🎯 Best Practices"):
+        st.markdown("""
+        - Request "Excel-ready format"
+        - Ask for "step-by-step"
+        - Use "show all formulas"
+        - Specify "markdown table"
+        """)
+
 st.markdown("""
-<div style='text-align: center; padding: 0.75rem; color: rgba(255,255,255,0.4); font-size: 0.8rem;'>
-    <strong>GeminiFlow</strong> • Powered by Gemini 2.0 • Created by Brijesh Singh
+<div style='text-align: center; padding: 20px; opacity: 0.6;'>
+    <p>Powered by Google Gemini 2.0 • Excel Auto-Export</p>
 </div>
 """, unsafe_allow_html=True)
