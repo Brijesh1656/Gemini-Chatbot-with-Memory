@@ -5,11 +5,18 @@ import google.generativeai as genai
 import time
 from PIL import Image
 import PyPDF2
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 import re
 import pandas as pd
 from io import BytesIO
+
+# Indian Standard Time (IST) timezone
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def get_ist_time():
+    """Get current time in Indian Standard Time"""
+    return datetime.now(IST)
 
 # Load environment variables
 load_dotenv()
@@ -543,7 +550,7 @@ def export_chat_json():
     """Export chat as JSON"""
     export_data = {
         "session_start": st.session_state.session_start.isoformat(),
-        "export_time": datetime.now().isoformat(),
+        "export_time": get_ist_time().isoformat(),
         "message_count": len(st.session_state.messages),
         "messages": st.session_state.messages
     }
@@ -552,7 +559,7 @@ def export_chat_json():
 def export_chat_markdown():
     """Export chat as markdown"""
     markdown = f"# Gemini AI Chat Session\n\n"
-    markdown += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    markdown += f"**Date:** {get_ist_time().strftime('%Y-%m-%d %H:%M:%S')} IST\n"
     markdown += f"**Messages:** {len(st.session_state.messages)}\n\n---\n\n"
     for i, msg in enumerate(st.session_state.messages, 1):
         markdown += f"## Message {i}\n\n**👤 User:**\n{msg['user']}\n\n"
@@ -691,7 +698,7 @@ if "uploaded_pdf" not in st.session_state:
 if "pdf_text" not in st.session_state:
     st.session_state.pdf_text = None
 if "session_start" not in st.session_state:
-    st.session_state.session_start = datetime.now()
+    st.session_state.session_start = get_ist_time()
 if "temperature" not in st.session_state:
     st.session_state.temperature = 0.7
 if "max_tokens" not in st.session_state:
@@ -726,7 +733,7 @@ with st.sidebar:
         with col1:
             st.metric("💬 Messages", len(st.session_state.messages))
         with col2:
-            duration = datetime.now() - st.session_state.session_start
+            duration = get_ist_time() - st.session_state.session_start
             mins = duration.seconds // 60
             st.metric("⏱️ Duration", f"{mins}m")
     
@@ -804,7 +811,7 @@ with st.sidebar:
             st.session_state.uploaded_image = None
             st.session_state.uploaded_pdf = None
             st.session_state.pdf_text = None
-            st.session_state.session_start = datetime.now()
+            st.session_state.session_start = get_ist_time()
             st.rerun()
     
     if st.session_state.messages:
@@ -817,11 +824,11 @@ with st.sidebar:
         col1, col2 = st.columns(2)
         with col1:
             st.download_button("� TXT", data=export_chat_markdown(),
-                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                             file_name=f"chat_{get_ist_time().strftime('%Y%m%d_%H%M%S')}.md",
                              mime="text/markdown", use_container_width=True)
         with col2:
             st.download_button("📊 JSON", data=export_chat_json(),
-                             file_name=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                             file_name=f"chat_{get_ist_time().strftime('%Y%m%d_%H%M%S')}.json",
                              mime="application/json", use_container_width=True)
     
     st.divider()
@@ -926,7 +933,7 @@ with chat_container:
                     excel_data = create_excel_from_response(msg["bot"])
                     if excel_data:
                         st.download_button("📥 Excel", data=excel_data,
-                                         file_name=f"data_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                         file_name=f"data_{i}_{get_ist_time().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                          key=f"excel_{i}")
                 with col_b:
@@ -981,7 +988,7 @@ if prompt := st.chat_input("💭 Message Gemini..."):
                 excel_data = create_excel_from_response(response)
                 if excel_data:
                     st.download_button("📥 Excel", data=excel_data,
-                                     file_name=f"data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                     file_name=f"data_{get_ist_time().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                      mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                      key="excel_current")
             with col_b:
@@ -991,13 +998,13 @@ if prompt := st.chat_input("💭 Message Gemini..."):
             with st.expander("📋 Copy Raw"):
                 st.code(response, language="markdown")
         
-        st.caption(f"🕒 {datetime.now().strftime('%I:%M %p')}")
+        st.caption(f"🕒 {get_ist_time().strftime('%I:%M %p')}")
     
     st.session_state.messages.append({
         "user": prompt, "bot": response,
         "has_image": st.session_state.uploaded_image is not None,
         "has_pdf": st.session_state.uploaded_pdf is not None,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": get_ist_time().isoformat()
     })
     st.rerun()
 
